@@ -33,7 +33,14 @@ class PdfExportService {
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(32),
         theme: pw.ThemeData.withFont(base: font, bold: fontBold),
-        header: (context) => _buildHeader(fontHeading, reportTitle, studentName, monthName, year, generatedDate),
+        header: (context) => _buildHeader(
+          fontHeading,
+          reportTitle,
+          studentName,
+          monthName,
+          year,
+          generatedDate,
+        ),
         footer: (context) => _buildFooter(context),
         build: (context) => [
           pw.SizedBox(height: 16),
@@ -42,19 +49,40 @@ class PdfExportService {
           pw.SizedBox(height: 18),
 
           // 2. Category Breakdown Table
-          pw.Text('Category-Wise Limit vs Actual Spending', style: pw.TextStyle(font: fontHeading, fontSize: 13, color: PdfColors.blue900)),
+          pw.Text(
+            'Category-Wise Limit vs Actual Spending',
+            style: pw.TextStyle(
+              font: fontHeading,
+              fontSize: 13,
+              color: PdfColors.blue900,
+            ),
+          ),
           pw.SizedBox(height: 6),
           _buildCategoryTable(categories),
           pw.SizedBox(height: 18),
 
           // 3. Friends & Shared Hisab Transparency Section
-          pw.Text('Friends & Shared Splits (Separated from Personal Expenses)', style: pw.TextStyle(font: fontHeading, fontSize: 13, color: PdfColors.teal900)),
+          pw.Text(
+            'Friends & Shared Splits (Separated from Personal Expenses)',
+            style: pw.TextStyle(
+              font: fontHeading,
+              fontSize: 13,
+              color: PdfColors.teal900,
+            ),
+          ),
           pw.SizedBox(height: 6),
           _buildFriendsSection(friendsBalances),
           pw.SizedBox(height: 18),
 
           // 4. Detailed Expense Log Table
-          pw.Text('Itemised Expense Transaction Log ($monthName $year)', style: pw.TextStyle(font: fontHeading, fontSize: 13, color: PdfColors.blue900)),
+          pw.Text(
+            'Itemised Expense Transaction Log ($monthName $year)',
+            style: pw.TextStyle(
+              font: fontHeading,
+              fontSize: 13,
+              color: PdfColors.blue900,
+            ),
+          ),
           pw.SizedBox(height: 6),
           _buildExpensesTable(expenses),
         ],
@@ -64,11 +92,20 @@ class PdfExportService {
     return pdf.save();
   }
 
-  static pw.Widget _buildHeader(pw.Font fontHeading, String title, String name, String month, int year, String genDate) {
+  static pw.Widget _buildHeader(
+    pw.Font fontHeading,
+    String title,
+    String name,
+    String month,
+    int year,
+    String genDate,
+  ) {
     return pw.Container(
       padding: const pw.EdgeInsets.only(bottom: 12),
       decoration: const pw.BoxDecoration(
-        border: pw.Border(bottom: pw.BorderSide(color: PdfColors.blue900, width: 2)),
+        border: pw.Border(
+          bottom: pw.BorderSide(color: PdfColors.blue900, width: 2),
+        ),
       ),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -76,15 +113,40 @@ class PdfExportService {
           pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text('POCKETPLAN', style: pw.TextStyle(font: fontHeading, fontSize: 18, color: PdfColors.blue900)),
-              pw.Text(title, style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+              pw.Text(
+                'POCKETPLAN',
+                style: pw.TextStyle(
+                  font: fontHeading,
+                  fontSize: 18,
+                  color: PdfColors.blue900,
+                ),
+              ),
+              pw.Text(
+                title,
+                style: const pw.TextStyle(
+                  fontSize: 10,
+                  color: PdfColors.grey700,
+                ),
+              ),
             ],
           ),
           pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
-              pw.Text('Student: $name', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
-              pw.Text('Period: $month $year  |  Date: $genDate', style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600)),
+              pw.Text(
+                'Student: $name',
+                style: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold,
+                  fontSize: 10,
+                ),
+              ),
+              pw.Text(
+                'Period: $month $year  |  Date: $genDate',
+                style: const pw.TextStyle(
+                  fontSize: 9,
+                  color: PdfColors.grey600,
+                ),
+              ),
             ],
           ),
         ],
@@ -103,28 +165,62 @@ class PdfExportService {
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
         children: [
-          _summaryCardItem('Pocket Money / Budget', CurrencyFormatter.formatPaise(summary.totalBudgetAvailablePaise), PdfColors.blue900),
-          _summaryCardItem('Total Spent', CurrencyFormatter.formatPaise(summary.totalPersonalSpentPaise), PdfColors.red800),
-          _summaryCardItem('Saved / Remaining', CurrencyFormatter.formatPaise(summary.remainingBalancePaise), PdfColors.green800),
-          _summaryCardItem('% Utilised', '${(summary.percentageUsed * 100).toStringAsFixed(1)}%', PdfColors.indigo900),
+          _summaryCardItem(
+            'Pocket Money / Budget',
+            CurrencyFormatter.formatPaise(summary.totalBudgetAvailablePaise),
+            PdfColors.blue900,
+          ),
+          _summaryCardItem(
+            'Total Spent',
+            CurrencyFormatter.formatPaise(summary.totalPersonalSpentPaise),
+            PdfColors.red800,
+          ),
+          _summaryCardItem(
+            'Saved / Remaining',
+            CurrencyFormatter.formatPaise(summary.remainingBalancePaise),
+            PdfColors.green800,
+          ),
+          _summaryCardItem(
+            '% Utilised',
+            '${(summary.percentageUsed * 100).toStringAsFixed(1)}%',
+            PdfColors.indigo900,
+          ),
         ],
       ),
     );
   }
 
-  static pw.Widget _summaryCardItem(String label, String value, PdfColor valueColor) {
+  static pw.Widget _summaryCardItem(
+    String label,
+    String value,
+    PdfColor valueColor,
+  ) {
     return pw.Column(
       children: [
-        pw.Text(label, style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
+        pw.Text(
+          label,
+          style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+        ),
         pw.SizedBox(height: 3),
-        pw.Text(value, style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: valueColor)),
+        pw.Text(
+          value,
+          style: pw.TextStyle(
+            fontSize: 12,
+            fontWeight: pw.FontWeight.bold,
+            color: valueColor,
+          ),
+        ),
       ],
     );
   }
 
   static pw.Widget _buildCategoryTable(List<CategoryBudgetSummary> categories) {
     return pw.TableHelper.fromTextArray(
-      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8, color: PdfColors.white),
+      headerStyle: pw.TextStyle(
+        fontWeight: pw.FontWeight.bold,
+        fontSize: 8,
+        color: PdfColors.white,
+      ),
       headerDecoration: const pw.BoxDecoration(color: PdfColors.blue900),
       cellStyle: const pw.TextStyle(fontSize: 8),
       cellHeight: 18,
@@ -136,11 +232,20 @@ class PdfExportService {
         4: pw.Alignment.center,
         5: pw.Alignment.center,
       },
-      headers: ['Category', 'Allocated Limit', 'Actual Spent', 'Remaining', '% Used', 'Status'],
+      headers: [
+        'Category',
+        'Allocated Limit',
+        'Actual Spent',
+        'Remaining',
+        '% Used',
+        'Status',
+      ],
       data: categories.map((cat) {
         final statusText = cat.status == CategoryStatus.ok
             ? 'OK'
-            : (cat.status == CategoryStatus.nearLimit ? 'Near Limit' : 'Over Limit');
+            : (cat.status == CategoryStatus.nearLimit
+                  ? 'Near Limit'
+                  : 'Over Limit');
         return [
           '${cat.emoji} ${cat.categoryName}',
           CurrencyFormatter.formatPaise(cat.limitPaise),
@@ -166,16 +271,44 @@ class PdfExportService {
         children: [
           pw.Column(
             children: [
-              pw.Text('Money Friends Owe Me (To Receive)', style: const pw.TextStyle(fontSize: 8, color: PdfColors.teal900)),
+              pw.Text(
+                'Money Friends Owe Me (To Receive)',
+                style: const pw.TextStyle(
+                  fontSize: 8,
+                  color: PdfColors.teal900,
+                ),
+              ),
               pw.SizedBox(height: 2),
-              pw.Text(CurrencyFormatter.formatPaise(friendsBalances.totalToReceivePaise), style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold, color: PdfColors.teal800)),
+              pw.Text(
+                CurrencyFormatter.formatPaise(
+                  friendsBalances.totalToReceivePaise,
+                ),
+                style: pw.TextStyle(
+                  fontSize: 11,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.teal800,
+                ),
+              ),
             ],
           ),
           pw.Column(
             children: [
-              pw.Text('My Pending Dues to Friends (To Pay)', style: const pw.TextStyle(fontSize: 8, color: PdfColors.teal900)),
+              pw.Text(
+                'My Pending Dues to Friends (To Pay)',
+                style: const pw.TextStyle(
+                  fontSize: 8,
+                  color: PdfColors.teal900,
+                ),
+              ),
               pw.SizedBox(height: 2),
-              pw.Text(CurrencyFormatter.formatPaise(friendsBalances.totalToPayPaise), style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold, color: PdfColors.red800)),
+              pw.Text(
+                CurrencyFormatter.formatPaise(friendsBalances.totalToPayPaise),
+                style: pw.TextStyle(
+                  fontSize: 11,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.red800,
+                ),
+              ),
             ],
           ),
         ],
@@ -187,12 +320,19 @@ class PdfExportService {
     if (expenses.isEmpty) {
       return pw.Padding(
         padding: const pw.EdgeInsets.all(8),
-        child: pw.Text('No expenses recorded for this month.', style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600)),
+        child: pw.Text(
+          'No expenses recorded for this month.',
+          style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+        ),
       );
     }
 
     return pw.TableHelper.fromTextArray(
-      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8, color: PdfColors.white),
+      headerStyle: pw.TextStyle(
+        fontWeight: pw.FontWeight.bold,
+        fontSize: 8,
+        color: PdfColors.white,
+      ),
       headerDecoration: const pw.BoxDecoration(color: PdfColors.blueGrey800),
       cellStyle: const pw.TextStyle(fontSize: 8),
       cellHeight: 18,
@@ -203,14 +343,24 @@ class PdfExportService {
         3: pw.Alignment.center,
         4: pw.Alignment.centerLeft,
       },
-      headers: ['Date', 'Where Spent / Description', 'Amount', 'Payment Mode', 'Notes'],
-      data: expenses.map((e) => [
-            DateFormatter.formatDate(e.date),
-            e.whereSpent,
-            CurrencyFormatter.formatPaise(e.amountPaise),
-            e.paymentMode,
-            e.note ?? '-',
-          ]).toList(),
+      headers: [
+        'Date',
+        'Where Spent / Description',
+        'Amount',
+        'Payment Mode',
+        'Notes',
+      ],
+      data: expenses
+          .map(
+            (e) => [
+              DateFormatter.formatDate(e.date),
+              e.whereSpent,
+              CurrencyFormatter.formatPaise(e.amountPaise),
+              e.paymentMode,
+              e.note ?? '-',
+            ],
+          )
+          .toList(),
     );
   }
 
@@ -245,7 +395,8 @@ class PdfExportService {
       friendsBalances: friendsBalances,
     );
 
-    final fileName = 'PocketPlan_Report_${DateFormatter.getMonthName(month)}_$year.pdf';
+    final fileName =
+        'PocketPlan_Report_${DateFormatter.getMonthName(month)}_$year.pdf';
     await Printing.sharePdf(bytes: pdfBytes, filename: fileName);
   }
 
@@ -267,8 +418,18 @@ class PdfExportService {
         margin: const pw.EdgeInsets.all(32),
         theme: pw.ThemeData.withFont(base: font, bold: fontBold),
         build: (context) => [
-          pw.Text('FRIEND HISAB STATEMENT', style: pw.TextStyle(font: fontHeading, fontSize: 18, color: PdfColors.blue900)),
-          pw.Text('Shared Account with $friendName', style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700)),
+          pw.Text(
+            'FRIEND HISAB STATEMENT',
+            style: pw.TextStyle(
+              font: fontHeading,
+              fontSize: 18,
+              color: PdfColors.blue900,
+            ),
+          ),
+          pw.Text(
+            'Shared Account with $friendName',
+            style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
+          ),
           pw.Divider(thickness: 1, color: PdfColors.blue900),
           pw.SizedBox(height: 12),
 
@@ -276,9 +437,15 @@ class PdfExportService {
           pw.Container(
             padding: const pw.EdgeInsets.all(12),
             decoration: pw.BoxDecoration(
-              color: balance.theyOweMe ? PdfColors.green50 : (balance.iOweThem ? PdfColors.red50 : PdfColors.grey100),
+              color: balance.theyOweMe
+                  ? PdfColors.green50
+                  : (balance.iOweThem ? PdfColors.red50 : PdfColors.grey100),
               borderRadius: pw.BorderRadius.circular(6),
-              border: pw.Border.all(color: balance.theyOweMe ? PdfColors.green300 : (balance.iOweThem ? PdfColors.red300 : PdfColors.grey300)),
+              border: pw.Border.all(
+                color: balance.theyOweMe
+                    ? PdfColors.green300
+                    : (balance.iOweThem ? PdfColors.red300 : PdfColors.grey300),
+              ),
             ),
             child: pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -287,11 +454,25 @@ class PdfExportService {
                   balance.theyOweMe
                       ? '$friendName owes you: ${CurrencyFormatter.formatPaise(balance.netBalancePaise)}'
                       : (balance.iOweThem
-                          ? 'You owe $friendName: ${CurrencyFormatter.formatPaise(-balance.netBalancePaise)}'
-                          : 'All Settled Up! 🎉'),
-                  style: pw.TextStyle(font: fontBold, fontSize: 14, color: balance.theyOweMe ? PdfColors.green900 : (balance.iOweThem ? PdfColors.red900 : PdfColors.grey800)),
+                            ? 'You owe $friendName: ${CurrencyFormatter.formatPaise(-balance.netBalancePaise)}'
+                            : 'All Settled Up! 🎉'),
+                  style: pw.TextStyle(
+                    font: fontBold,
+                    fontSize: 14,
+                    color: balance.theyOweMe
+                        ? PdfColors.green900
+                        : (balance.iOweThem
+                              ? PdfColors.red900
+                              : PdfColors.grey800),
+                  ),
                 ),
-                pw.Text('Audited via PocketPlan', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+                pw.Text(
+                  'Audited via PocketPlan',
+                  style: const pw.TextStyle(
+                    fontSize: 8,
+                    color: PdfColors.grey600,
+                  ),
+                ),
               ],
             ),
           ),

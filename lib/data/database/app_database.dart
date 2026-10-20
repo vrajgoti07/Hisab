@@ -13,17 +13,21 @@ class MonthlyBudgets extends Table {
   IntColumn get month => integer()(); // 1 to 12
   IntColumn get amountPaise => integer()(); // in paise (e.g. 2500000 = ₹25,000)
   BoolColumn get carryForward => boolean().withDefault(const Constant(true))();
-  IntColumn get carriedAmountPaise => integer().withDefault(const Constant(0))();
+  IntColumn get carriedAmountPaise =>
+      integer().withDefault(const Constant(0))();
 
   @override
-  List<Set<Column>> get uniqueKeys => [{year, month}];
+  List<Set<Column>> get uniqueKeys => [
+    {year, month},
+  ];
 }
 
 class Categories extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text().withLength(min: 1, max: 50)();
   TextColumn get emoji => text().withLength(min: 1, max: 10)();
-  TextColumn get colorHex => text().withLength(min: 6, max: 9)(); // e.g. #0D9488
+  TextColumn get colorHex =>
+      text().withLength(min: 6, max: 9)(); // e.g. #0D9488
   IntColumn get monthlyLimitPaise => integer()(); // in paise
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
@@ -35,11 +39,14 @@ class Expenses extends Table {
   IntColumn get categoryId => integer().references(Categories, #id)();
   TextColumn get whereSpent => text().withLength(min: 1, max: 100)();
   IntColumn get amountPaise => integer()(); // in paise
-  TextColumn get paymentMode => text().withLength(min: 1, max: 50)(); // UPI, Cash, Card, etc.
+  TextColumn get paymentMode =>
+      text().withLength(min: 1, max: 50)(); // UPI, Cash, Card, etc.
   TextColumn get note => text().nullable()();
   TextColumn get receiptPath => text().nullable()();
-  TextColumn get splitExpenseId => text().nullable()(); // link to split if generated
-  BoolColumn get isRecurringGenerated => boolean().withDefault(const Constant(false))();
+  TextColumn get splitExpenseId =>
+      text().nullable()(); // link to split if generated
+  BoolColumn get isRecurringGenerated =>
+      boolean().withDefault(const Constant(false))();
 }
 
 class PaymentModes extends Table {
@@ -54,7 +61,8 @@ class RecurringExpenses extends Table {
   IntColumn get categoryId => integer().references(Categories, #id)();
   IntColumn get amountPaise => integer()();
   IntColumn get dayOfMonth => integer()(); // 1 to 31
-  TextColumn get paymentMode => text().withDefault(const Constant('UPI / GPay / PhonePe'))();
+  TextColumn get paymentMode =>
+      text().withDefault(const Constant('UPI / GPay / PhonePe'))();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
 }
 
@@ -92,7 +100,8 @@ class SplitExpenses extends Table {
 
 class SplitShares extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get splitExpenseId => text().references(SplitExpenses, #id, onDelete: KeyAction.cascade)();
+  TextColumn get splitExpenseId =>
+      text().references(SplitExpenses, #id, onDelete: KeyAction.cascade)();
   IntColumn get personId => integer().nullable()(); // null = 'Me'
   IntColumn get shareAmountPaise => integer()();
 }
@@ -103,7 +112,8 @@ class Settlements extends Table {
   IntColumn get fromPersonId => integer().nullable()(); // null = 'Me'
   IntColumn get toPersonId => integer().nullable()(); // null = 'Me'
   IntColumn get amountPaise => integer()();
-  TextColumn get mode => text().withDefault(const Constant('UPI / GPay / PhonePe'))();
+  TextColumn get mode =>
+      text().withDefault(const Constant('UPI / GPay / PhonePe'))();
   TextColumn get note => text().nullable()();
 }
 
@@ -111,12 +121,16 @@ class AppSettings extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get userName => text().withDefault(const Constant('Student'))();
   TextColumn get currency => text().withDefault(const Constant('INR'))();
-  TextColumn get themeMode => text().withDefault(const Constant('system'))(); // light, dark, system
-  BoolColumn get carryForwardDefault => boolean().withDefault(const Constant(true))();
+  TextColumn get themeMode =>
+      text().withDefault(const Constant('system'))(); // light, dark, system
+  BoolColumn get carryForwardDefault =>
+      boolean().withDefault(const Constant(true))();
   BoolColumn get pinEnabled => boolean().withDefault(const Constant(false))();
   TextColumn get pinCode => text().nullable()();
-  BoolColumn get notificationsEnabled => boolean().withDefault(const Constant(true))();
-  IntColumn get reminderHour => integer().withDefault(const Constant(21))(); // 9 PM
+  BoolColumn get notificationsEnabled =>
+      boolean().withDefault(const Constant(true))();
+  IntColumn get reminderHour =>
+      integer().withDefault(const Constant(21))(); // 9 PM
   IntColumn get reminderMinute => integer().withDefault(const Constant(0))();
 }
 
@@ -124,19 +138,21 @@ class AppSettings extends Table {
 // DATABASE CLASS
 // ---------------------------------------------------------------------------
 
-@DriftDatabase(tables: [
-  MonthlyBudgets,
-  Categories,
-  Expenses,
-  PaymentModes,
-  RecurringExpenses,
-  SavingsGoals,
-  Persons,
-  SplitExpenses,
-  SplitShares,
-  Settlements,
-  AppSettings,
-])
+@DriftDatabase(
+  tables: [
+    MonthlyBudgets,
+    Categories,
+    Expenses,
+    PaymentModes,
+    RecurringExpenses,
+    SavingsGoals,
+    Persons,
+    SplitExpenses,
+    SplitShares,
+    Settlements,
+    AppSettings,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
@@ -155,8 +171,8 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (Migrator m) async {
-          await m.createAll();
-        },
-      );
+    onCreate: (Migrator m) async {
+      await m.createAll();
+    },
+  );
 }

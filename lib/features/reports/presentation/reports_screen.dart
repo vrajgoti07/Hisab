@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/app_constants.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../data/database/app_database.dart';
@@ -16,7 +17,8 @@ class ReportsScreen extends ConsumerStatefulWidget {
   ConsumerState<ReportsScreen> createState() => _ReportsScreenState();
 }
 
-class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTickerProviderStateMixin {
+class _ReportsScreenState extends ConsumerState<ReportsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -39,6 +41,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
     final expensesAsync = ref.watch(activeMonthlyExpensesStreamProvider);
     final categoriesAsync = ref.watch(activeCategoriesStreamProvider);
     final appSettingsAsync = ref.watch(appSettingsStreamProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final dashState = dashStateAsync.value;
     final balances = overallBalancesAsync.value;
@@ -47,16 +50,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
     final studentName = appSettingsAsync.value?.userName ?? 'Student';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
       appBar: AppBar(
         title: const Text('Reports & Audit'),
-        backgroundColor: const Color(0xFFF6F7FB),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: AppConstants.primaryBlue,
-          labelColor: AppConstants.primaryBlue,
-          unselectedLabelColor: const Color(0xFF64748B),
-          labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          indicatorColor: AppColors.emerald,
+          labelColor: isDark ? AppColors.tealLight : AppColors.emerald,
+          unselectedLabelColor: AppColors.neutralSlate,
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+          ),
           tabs: const [
             Tab(text: 'Monthly Parent Audit'),
             Tab(text: 'Yearly Overview (12-Mo)'),
@@ -68,7 +72,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
         children: [
           // TAB 1: Monthly Parent Audit
           SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -76,27 +80,39 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? AppColors.cardDark : Colors.white,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.borderDark
+                          : AppColors.borderLight,
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.description_outlined, color: Color(0xFF0D9488)),
+                          const Icon(
+                            LucideIcons.fileText,
+                            size: 18,
+                            color: AppColors.emerald,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'Report for: ${activeMY.displayName}',
-                            style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w700, fontSize: 14),
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
                           ),
                         ],
                       ),
                       TextButton.icon(
-                        icon: const Icon(Icons.tune, size: 16),
-                        label: const Text('Change Month'),
-                        onPressed: () => _showMonthPicker(context),
+                        icon: const Icon(LucideIcons.calendar, size: 16),
+                        label: const Text('Change'),
+                        onPressed: () => _showMonthPicker(context, isDark),
                       ),
                     ],
                   ),
@@ -108,16 +124,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
                   Container(
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: isDark ? AppColors.cardDark : Colors.white,
                       borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: const Color(0xFFCBD5E1)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.borderDark
+                            : AppColors.borderLight,
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,29 +138,95 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('MONTHLY SUMMARY', style: TextStyle(fontFamily: 'Poppins', fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1A365D))),
+                            Text(
+                              'MONTHLY AUDIT SUMMARY',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? AppColors.textPrimaryDark
+                                    : AppColors.emeraldDark,
+                              ),
+                            ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(8)),
-                              child: const Text('AUDITED', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF15803D))),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.safeGreen.withValues(
+                                  alpha: 0.12,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                'AUDITED',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.safeGreen,
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                        const Divider(height: 20),
+                        Divider(
+                          height: 20,
+                          color: isDark
+                              ? AppColors.borderDark
+                              : AppColors.borderLight,
+                        ),
                         _previewRow('Student Name:', studentName),
-                        _previewRow('Total Pocket Money:', CurrencyFormatter.formatPaise(dashState.monthSummary.totalBudgetAvailablePaise)),
-                        _previewRow('Total Expenses Logged:', CurrencyFormatter.formatPaise(dashState.monthSummary.totalPersonalSpentPaise), isRed: true),
-                        _previewRow('Unspent Savings:', CurrencyFormatter.formatPaise(dashState.monthSummary.remainingBalancePaise), isGreen: true),
-                        _previewRow('Budget Consumption:', '${(dashState.monthSummary.percentageUsed * 100).toStringAsFixed(1)}%'),
-                        _previewRow('Pending from Friends:', CurrencyFormatter.formatPaise(balances.totalToReceivePaise)),
-                        _previewRow('Total Transactions:', '${expenses.length} entries'),
+                        _previewRow(
+                          'Total Monthly Budget:',
+                          CurrencyFormatter.formatPaise(
+                            dashState.monthSummary.totalBudgetAvailablePaise,
+                          ),
+                        ),
+                        _previewRow(
+                          'Total Expenses Logged:',
+                          CurrencyFormatter.formatPaise(
+                            dashState.monthSummary.totalPersonalSpentPaise,
+                          ),
+                          isRed: true,
+                        ),
+                        _previewRow(
+                          'Unspent Savings:',
+                          CurrencyFormatter.formatPaise(
+                            dashState.monthSummary.remainingBalancePaise,
+                          ),
+                          isGreen: true,
+                        ),
+                        _previewRow(
+                          'Budget Consumption:',
+                          '${(dashState.monthSummary.percentageUsed * 100).toStringAsFixed(1)}%',
+                        ),
+                        _previewRow(
+                          'Pending from Friends:',
+                          CurrencyFormatter.formatPaise(
+                            balances.totalToReceivePaise,
+                          ),
+                        ),
+                        _previewRow(
+                          'Total Transactions:',
+                          '${expenses.length} entries',
+                        ),
                       ],
                     ),
                   ),
                 const SizedBox(height: 20),
 
                 // Export Actions Grid
-                const Text('EXPORT & SHARING OPTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+                const Text(
+                  'EXPORT & SHARING OPTIONS',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.neutralSlate,
+                    letterSpacing: 0.8,
+                  ),
+                ),
                 const SizedBox(height: 10),
 
                 // PDF Button (Hero)
@@ -168,11 +247,23 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
                         );
                       }
                     },
-                    icon: const Icon(Icons.picture_as_pdf_rounded, color: Colors.white),
-                    label: const Text('Export Official PDF (A4 Parent Report)', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white)),
+                    icon: const Icon(
+                      LucideIcons.fileText,
+                      size: 20,
+                      color: Colors.white,
+                    ),
+                    label: const Text(
+                      'Export Official PDF (A4 Parent Report)',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1A365D),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      backgroundColor: AppColors.emerald,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                   ),
                 ),
@@ -196,13 +287,24 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
                             );
                           }
                         },
-                        icon: const Icon(Icons.table_view_rounded, size: 18, color: Color(0xFF15803D)),
-                        label: const Text('Excel (.xlsx)', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF15803D), fontSize: 13)),
+                        icon: const Icon(
+                          LucideIcons.fileSpreadsheet,
+                          size: 18,
+                          color: AppColors.safeGreen,
+                        ),
+                        label: const Text(
+                          'Excel (.xlsx)',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.safeGreen,
+                            fontSize: 13,
+                          ),
+                        ),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          side: const BorderSide(color: Color(0xFF86EFAC)),
-                          backgroundColor: const Color(0xFFF0FDF4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
                       ),
                     ),
@@ -219,42 +321,64 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
                             categories: categories,
                           );
                         },
-                        icon: const Icon(Icons.file_download_outlined, size: 18, color: Color(0xFF0D9488)),
-                        label: const Text('CSV Export', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0D9488), fontSize: 13)),
+                        icon: const Icon(
+                          LucideIcons.fileCode,
+                          size: 18,
+                          color: AppColors.teal,
+                        ),
+                        label: const Text(
+                          'CSV Export',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.teal,
+                            fontSize: 13,
+                          ),
+                        ),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          side: const BorderSide(color: Color(0xFF99F6E4)),
-                          backgroundColor: const Color(0xFFF0FDFA),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
 
           // TAB 2: Yearly Overview (12 Months Comparison)
-          _buildYearlyOverviewTab(ref, activeMY.year),
+          _buildYearlyOverviewTab(ref, activeMY.year, isDark),
         ],
       ),
     );
   }
 
-  Widget _previewRow(String label, String value, {bool isRed = false, bool isGreen = false}) {
+  Widget _previewRow(
+    String label,
+    String value, {
+    bool isRed = false,
+    bool isGreen = false,
+  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: AppColors.neutralSlate),
+          ),
           Text(
             value,
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 13,
-              color: isRed ? const Color(0xFFEF4444) : (isGreen ? const Color(0xFF10B981) : const Color(0xFF0F172A)),
+              color: isRed
+                  ? AppColors.dangerRed
+                  : (isGreen ? AppColors.safeGreen : null),
             ),
           ),
         ],
@@ -262,14 +386,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
     );
   }
 
-  Widget _buildYearlyOverviewTab(WidgetRef ref, int year) {
+  Widget _buildYearlyOverviewTab(WidgetRef ref, int year, bool isDark) {
     final repo = ref.watch(repositoryProvider);
 
     return FutureBuilder<List<MonthlyBudget>>(
       future: repo.getYearlyBudgets(year),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator(color: AppColors.emerald),
+          );
         }
 
         final budgets = snapshot.data ?? [];
@@ -286,11 +412,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
             return Card(
               margin: const EdgeInsets.only(bottom: 10),
               child: ListTile(
-                title: Text(mName, style: const TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: Text('Budget: ${CurrencyFormatter.formatPaise(budget)}'),
-                trailing: const Icon(Icons.chevron_right_rounded),
+                title: Text(
+                  mName,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                subtitle: Text(
+                  'Budget: ${CurrencyFormatter.formatPaise(budget)}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.neutralSlate,
+                  ),
+                ),
+                trailing: const Icon(LucideIcons.chevronRight, size: 18),
                 onTap: () {
-                  ref.read(activeMonthYearProvider.notifier).state = ActiveMonthYear(year: year, month: month);
+                  ref.read(activeMonthYearProvider.notifier).state =
+                      ActiveMonthYear(year: year, month: month);
                   _tabController.animateTo(0);
                 },
               ),
@@ -301,18 +437,27 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
     );
   }
 
-  void _showMonthPicker(BuildContext context) {
+  void _showMonthPicker(BuildContext context, bool isDark) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (_) {
         return Container(
           padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Select Month for Audit Report', style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 14),
+              const Text(
+                'Select Month for Audit Report',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 16),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -324,14 +469,23 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
                     label: Text(DateFormatter.getMonthName(m)),
                     selected: isSel,
                     onSelected: (_) {
-                      ref.read(activeMonthYearProvider.notifier).state = currentMY.copyWith(month: m);
+                      ref.read(activeMonthYearProvider.notifier).state =
+                          currentMY.copyWith(month: m);
                       Navigator.of(context).pop();
                     },
-                    selectedColor: AppConstants.primaryBlue,
-                    labelStyle: TextStyle(color: isSel ? Colors.white : const Color(0xFF334155), fontSize: 12),
+                    selectedColor: AppColors.emerald,
+                    labelStyle: TextStyle(
+                      color: isSel
+                          ? Colors.white
+                          : (isDark
+                                ? AppColors.textPrimaryDark
+                                : AppColors.textSecondaryLight),
+                      fontSize: 12,
+                    ),
                   );
                 }),
               ),
+              const SizedBox(height: 16),
             ],
           ),
         );

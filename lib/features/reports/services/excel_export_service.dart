@@ -25,17 +25,57 @@ class ExcelExportService {
     // 1. Summary Sheet
     final sheetSummary = excel['Summary'];
     excel.setDefaultSheet('Summary');
-    sheetSummary.appendRow([TextCellValue('POCKETPLAN - MONTHLY AUDIT REPORT')]);
-    sheetSummary.appendRow([TextCellValue('Student: $studentName | Period: $monthName $year')]);
+    sheetSummary.appendRow([
+      TextCellValue('POCKETPLAN - MONTHLY AUDIT REPORT'),
+    ]);
+    sheetSummary.appendRow([
+      TextCellValue('Student: $studentName | Period: $monthName $year'),
+    ]);
     sheetSummary.appendRow([TextCellValue('')]);
-    sheetSummary.appendRow([TextCellValue('Metric'), TextCellValue('Amount (INR)')]);
-    sheetSummary.appendRow([TextCellValue('Total Monthly Budget'), DoubleCellValue(CurrencyFormatter.paiseToRupees(summary.totalBudgetAvailablePaise))]);
-    sheetSummary.appendRow([TextCellValue('Total Personal Spent'), DoubleCellValue(CurrencyFormatter.paiseToRupees(summary.totalPersonalSpentPaise))]);
-    sheetSummary.appendRow([TextCellValue('Remaining Unspent Balance'), DoubleCellValue(CurrencyFormatter.paiseToRupees(summary.remainingBalancePaise))]);
-    sheetSummary.appendRow([TextCellValue('Budget Utilisation %'), TextCellValue('${(summary.percentageUsed * 100).toStringAsFixed(1)}%')]);
-    sheetSummary.appendRow([TextCellValue('Safe Daily Spend'), DoubleCellValue(CurrencyFormatter.paiseToRupees(summary.safeDailySpendPaise))]);
-    sheetSummary.appendRow([TextCellValue('Friends to Receive'), DoubleCellValue(CurrencyFormatter.paiseToRupees(friendsBalances.totalToReceivePaise))]);
-    sheetSummary.appendRow([TextCellValue('My Dues to Friends'), DoubleCellValue(CurrencyFormatter.paiseToRupees(friendsBalances.totalToPayPaise))]);
+    sheetSummary.appendRow([
+      TextCellValue('Metric'),
+      TextCellValue('Amount (INR)'),
+    ]);
+    sheetSummary.appendRow([
+      TextCellValue('Total Monthly Budget'),
+      DoubleCellValue(
+        CurrencyFormatter.paiseToRupees(summary.totalBudgetAvailablePaise),
+      ),
+    ]);
+    sheetSummary.appendRow([
+      TextCellValue('Total Personal Spent'),
+      DoubleCellValue(
+        CurrencyFormatter.paiseToRupees(summary.totalPersonalSpentPaise),
+      ),
+    ]);
+    sheetSummary.appendRow([
+      TextCellValue('Remaining Unspent Balance'),
+      DoubleCellValue(
+        CurrencyFormatter.paiseToRupees(summary.remainingBalancePaise),
+      ),
+    ]);
+    sheetSummary.appendRow([
+      TextCellValue('Budget Utilisation %'),
+      TextCellValue('${(summary.percentageUsed * 100).toStringAsFixed(1)}%'),
+    ]);
+    sheetSummary.appendRow([
+      TextCellValue('Safe Daily Spend'),
+      DoubleCellValue(
+        CurrencyFormatter.paiseToRupees(summary.safeDailySpendPaise),
+      ),
+    ]);
+    sheetSummary.appendRow([
+      TextCellValue('Friends to Receive'),
+      DoubleCellValue(
+        CurrencyFormatter.paiseToRupees(friendsBalances.totalToReceivePaise),
+      ),
+    ]);
+    sheetSummary.appendRow([
+      TextCellValue('My Dues to Friends'),
+      DoubleCellValue(
+        CurrencyFormatter.paiseToRupees(friendsBalances.totalToPayPaise),
+      ),
+    ]);
 
     // 2. Expenses Sheet
     final sheetExpenses = excel['Expenses'];
@@ -89,10 +129,14 @@ class ExcelExportService {
     for (final pb in friendsBalances.personBalances) {
       sheetHisab.appendRow([
         TextCellValue(pb.personName),
-        DoubleCellValue(CurrencyFormatter.paiseToRupees(pb.totalTheyOweMePaise)),
+        DoubleCellValue(
+          CurrencyFormatter.paiseToRupees(pb.totalTheyOweMePaise),
+        ),
         DoubleCellValue(CurrencyFormatter.paiseToRupees(pb.totalIOweThemPaise)),
         DoubleCellValue(CurrencyFormatter.paiseToRupees(pb.netBalancePaise)),
-        TextCellValue(pb.theyOweMe ? 'Owes Me' : (pb.iOweThem ? 'I Owe' : 'Settled')),
+        TextCellValue(
+          pb.theyOweMe ? 'Owes Me' : (pb.iOweThem ? 'I Owe' : 'Settled'),
+        ),
       ]);
     }
 
@@ -105,7 +149,9 @@ class ExcelExportService {
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/PocketPlan_${monthName}_$year.xlsx');
       await file.writeAsBytes(fileBytes);
-      await Share.shareXFiles([XFile(file.path)], text: 'PocketPlan Monthly Excel Report ($monthName $year)');
+      await Share.shareXFiles([
+        XFile(file.path),
+      ], text: 'PocketPlan Monthly Excel Report ($monthName $year)');
     }
   }
 }

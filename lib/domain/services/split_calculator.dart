@@ -91,11 +91,13 @@ class SplitCalculator {
         // Distribute base share, and give 1 extra paise to first `remainder` participants
         for (int i = 0; i < n; i++) {
           final share = baseShare + (i < remainder ? 1 : 0);
-          calculated.add(CalculatedShare(
-            personId: participants[i].personId,
-            name: participants[i].name,
-            shareAmountPaise: share,
-          ));
+          calculated.add(
+            CalculatedShare(
+              personId: participants[i].personId,
+              name: participants[i].name,
+              shareAmountPaise: share,
+            ),
+          );
         }
         break;
 
@@ -114,11 +116,13 @@ class SplitCalculator {
             );
           }
           runningSum += amt;
-          calculated.add(CalculatedShare(
-            personId: participants[i].personId,
-            name: participants[i].name,
-            shareAmountPaise: amt,
-          ));
+          calculated.add(
+            CalculatedShare(
+              personId: participants[i].personId,
+              name: participants[i].name,
+              shareAmountPaise: amt,
+            ),
+          );
         }
 
         if (runningSum != totalAmountPaise) {
@@ -128,7 +132,8 @@ class SplitCalculator {
               : 'Over by ${((-diff) / 100).toStringAsFixed(2)} INR';
           return SplitCalculationResult(
             isValid: false,
-            errorMessage: 'Sum of exact shares must equal total bill ($diffMsg).',
+            errorMessage:
+                'Sum of exact shares must equal total bill ($diffMsg).',
             shares: calculated,
             totalAmountPaise: totalAmountPaise,
             mySharePaise: 0,
@@ -146,7 +151,8 @@ class SplitCalculator {
         if ((totalPct - 100.0).abs() > 0.05) {
           return SplitCalculationResult(
             isValid: false,
-            errorMessage: 'Percentages must sum to 100% (currently ${totalPct.toStringAsFixed(1)}%).',
+            errorMessage:
+                'Percentages must sum to 100% (currently ${totalPct.toStringAsFixed(1)}%).',
             shares: const [],
             totalAmountPaise: totalAmountPaise,
             mySharePaise: 0,
@@ -159,20 +165,24 @@ class SplitCalculator {
           if (i == n - 1) {
             // Adjust last person to ensure exact penny match
             final lastShare = totalAmountPaise - distributed;
-            calculated.add(CalculatedShare(
-              personId: participants[i].personId,
-              name: participants[i].name,
-              shareAmountPaise: lastShare,
-            ));
+            calculated.add(
+              CalculatedShare(
+                personId: participants[i].personId,
+                name: participants[i].name,
+                shareAmountPaise: lastShare,
+              ),
+            );
           } else {
             final pct = participants[i].percentage ?? 0.0;
             final share = (totalAmountPaise * (pct / 100.0)).round();
             distributed += share;
-            calculated.add(CalculatedShare(
-              personId: participants[i].personId,
-              name: participants[i].name,
-              shareAmountPaise: share,
-            ));
+            calculated.add(
+              CalculatedShare(
+                personId: participants[i].personId,
+                name: participants[i].name,
+                shareAmountPaise: share,
+              ),
+            );
           }
         }
         break;
@@ -198,20 +208,24 @@ class SplitCalculator {
         for (int i = 0; i < n; i++) {
           if (i == n - 1) {
             final lastShare = totalAmountPaise - distributed;
-            calculated.add(CalculatedShare(
-              personId: participants[i].personId,
-              name: participants[i].name,
-              shareAmountPaise: lastShare,
-            ));
+            calculated.add(
+              CalculatedShare(
+                personId: participants[i].personId,
+                name: participants[i].name,
+                shareAmountPaise: lastShare,
+              ),
+            );
           } else {
             final count = participants[i].shareCount ?? 1;
             final share = (totalAmountPaise * count ~/ totalShares);
             distributed += share;
-            calculated.add(CalculatedShare(
-              personId: participants[i].personId,
-              name: participants[i].name,
-              shareAmountPaise: share,
-            ));
+            calculated.add(
+              CalculatedShare(
+                personId: participants[i].personId,
+                name: participants[i].name,
+                shareAmountPaise: share,
+              ),
+            );
           }
         }
         break;

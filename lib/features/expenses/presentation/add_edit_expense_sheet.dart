@@ -1,7 +1,9 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../data/database/app_database.dart';
@@ -14,7 +16,8 @@ class AddEditExpenseSheet extends ConsumerStatefulWidget {
   const AddEditExpenseSheet({super.key, this.existingExpense});
 
   @override
-  ConsumerState<AddEditExpenseSheet> createState() => _AddEditExpenseSheetState();
+  ConsumerState<AddEditExpenseSheet> createState() =>
+      _AddEditExpenseSheetState();
 }
 
 class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
@@ -32,7 +35,11 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
     super.initState();
     final e = widget.existingExpense;
     _amountController = TextEditingController(
-      text: e != null ? (e.amountPaise / 100.0).toStringAsFixed(e.amountPaise % 100 == 0 ? 0 : 2) : '',
+      text: e != null
+          ? (e.amountPaise / 100.0).toStringAsFixed(
+              e.amountPaise % 100 == 0 ? 0 : 2,
+            )
+          : '',
     );
     _whereSpentController = TextEditingController(text: e?.whereSpent ?? '');
     _noteController = TextEditingController(text: e?.note ?? '');
@@ -61,19 +68,6 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppConstants.primaryBlue,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: const Color(0xFF0F172A),
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null) {
       setState(() {
@@ -82,9 +76,13 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
     }
   }
 
-  String? _getCategoryLimitWarning(List<Category> categories, DashboardState? dashState) {
+  String? _getCategoryLimitWarning(
+    List<Category> categories,
+    DashboardState? dashState,
+  ) {
     if (_selectedCategoryId == null || dashState == null) return null;
-    final enteredPaise = CurrencyFormatter.parseToPaise(_amountController.text) ?? 0;
+    final enteredPaise =
+        CurrencyFormatter.parseToPaise(_amountController.text) ?? 0;
     if (enteredPaise <= 0) return null;
 
     final catSummary = dashState.categorySummaries.firstWhere(
@@ -95,7 +93,7 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
     final projectedSpent = catSummary.spentPaise + enteredPaise;
     if (projectedSpent > catSummary.limitPaise) {
       final overBy = projectedSpent - catSummary.limitPaise;
-      return '⚠️ Warning: This will exceed ${catSummary.categoryName} monthly limit by ${CurrencyFormatter.formatPaise(overBy)}!';
+      return 'Warning: This will exceed ${catSummary.categoryName} monthly limit by ${CurrencyFormatter.formatPaise(overBy)}!';
     }
     return null;
   }
@@ -104,7 +102,9 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
     final amountPaise = CurrencyFormatter.parseToPaise(_amountController.text);
     if (amountPaise == null || amountPaise <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid amount greater than ₹0.')),
+        const SnackBar(
+          content: Text('Please enter a valid amount greater than ₹0.'),
+        ),
       );
       return;
     }
@@ -149,7 +149,11 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
           whereSpent: whereSpent,
           amountPaise: amountPaise,
           paymentMode: _selectedPaymentMode,
-          note: drift.Value(_noteController.text.trim().isEmpty ? null : _noteController.text.trim()),
+          note: drift.Value(
+            _noteController.text.trim().isEmpty
+                ? null
+                : _noteController.text.trim(),
+          ),
         ),
       );
     } else {
@@ -160,7 +164,11 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
           whereSpent: whereSpent,
           amountPaise: amountPaise,
           paymentMode: _selectedPaymentMode,
-          note: drift.Value(_noteController.text.trim().isEmpty ? null : _noteController.text.trim()),
+          note: drift.Value(
+            _noteController.text.trim().isEmpty
+                ? null
+                : _noteController.text.trim(),
+          ),
         ),
       );
     }
@@ -169,8 +177,12 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(widget.existingExpense != null ? 'Expense updated!' : 'Expense saved successfully!'),
-          backgroundColor: const Color(0xFF0D9488),
+          content: Text(
+            widget.existingExpense != null
+                ? 'Expense updated!'
+                : 'Expense saved successfully!',
+          ),
+          backgroundColor: AppColors.emerald,
         ),
       );
     }
@@ -181,18 +193,22 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
     final categoriesAsync = ref.watch(activeCategoriesStreamProvider);
     final dashStateAsync = ref.watch(dashboardStateProvider);
     final whereSpentSuggestionsAsync = ref.watch(distinctWhereSpentProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final categories = categoriesAsync.value ?? [];
     if (_selectedCategoryId == null && categories.isNotEmpty) {
       _selectedCategoryId = categories.first.id;
     }
 
-    final warningMessage = _getCategoryLimitWarning(categories, dashStateAsync.value);
+    final warningMessage = _getCategoryLimitWarning(
+      categories,
+      dashStateAsync.value,
+    );
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.only(
         left: 20,
@@ -211,7 +227,9 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
                 width: 44,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: isDark
+                      ? AppColors.borderDark
+                      : const Color(0xFFCBD5E1),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -223,29 +241,32 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  widget.existingExpense != null ? 'Edit Expense' : 'Log Daily Expense',
+                  widget.existingExpense != null
+                      ? 'Edit Expense'
+                      : 'Log Daily Expense',
                   style: const TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Colors.grey),
+                  icon: const Icon(LucideIcons.x, size: 20),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
-            // Amount Input Card with Hero Rupee feel
+            // Amount Input Card
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: isDark ? AppColors.cardDark : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(
+                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                ),
               ),
               child: Row(
                 children: [
@@ -253,26 +274,31 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
                     '₹',
                     style: TextStyle(
                       fontFamily: 'Poppins',
-                      fontSize: 34,
+                      fontSize: 32,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF1A365D),
+                      color: AppColors.emerald,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
                       controller: _amountController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       style: const TextStyle(
                         fontFamily: 'Poppins',
-                        fontSize: 34,
+                        fontSize: 32,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
                       ),
                       decoration: const InputDecoration(
                         hintText: '0.00',
                         border: InputBorder.none,
-                        hintStyle: TextStyle(color: Color(0xFF94A3B8)),
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        fillColor: Colors.transparent,
+                        filled: false,
+                        contentPadding: EdgeInsets.zero,
                       ),
                       onChanged: (_) => setState(() {}),
                     ),
@@ -285,20 +311,30 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
             if (warningMessage != null) ...[
               const SizedBox(height: 10),
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
+                  color: AppColors.warningAmber.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFCD34D)),
+                  border: Border.all(
+                    color: AppColors.warningAmber.withValues(alpha: 0.4),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309), size: 20),
+                    const Icon(
+                      LucideIcons.triangleAlert,
+                      color: AppColors.warningAmber,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         warningMessage,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF92400E)),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.warningAmber,
+                        ),
                       ),
                     ),
                   ],
@@ -310,7 +346,12 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
             // Category Chips (Horizontal Scrolling)
             const Text(
               'CATEGORY',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B), letterSpacing: 0.8),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.neutralSlate,
+                letterSpacing: 0.8,
+              ),
             ),
             const SizedBox(height: 8),
             SizedBox(
@@ -326,16 +367,30 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
                     label: Text('${cat.emoji} ${cat.name}'),
                     selected: isSelected,
                     onSelected: (_) => _onCategorySelected(cat.id),
-                    selectedColor: AppConstants.primaryBlue,
+                    selectedColor: AppColors.emerald,
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : const Color(0xFF334155),
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      color: isSelected
+                          ? Colors.white
+                          : (isDark
+                                ? AppColors.textPrimaryDark
+                                : AppColors.textSecondaryLight),
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                       fontSize: 12,
                     ),
-                    backgroundColor: const Color(0xFFF1F5F9),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    side: BorderSide(
-                      color: isSelected ? AppConstants.primaryBlue : const Color(0xFFE2E8F0),
+                    backgroundColor: isDark
+                        ? AppColors.cardDark
+                        : const Color(0xFFF1F5F9),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: isSelected
+                            ? AppColors.emerald
+                            : (isDark
+                                  ? AppColors.borderDark
+                                  : AppColors.borderLight),
+                      ),
                     ),
                   );
                 },
@@ -346,39 +401,46 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
             // Where Spent (Autocomplete)
             const Text(
               'WHERE SPENT / DESCRIPTION',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B), letterSpacing: 0.8),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.neutralSlate,
+                letterSpacing: 0.8,
+              ),
             ),
             const SizedBox(height: 6),
             RawAutocomplete<String>(
               textEditingController: _whereSpentController,
               focusNode: FocusNode(),
               optionsBuilder: (TextEditingValue textEditingValue) {
-                if (textEditingValue.text.isEmpty) return const Iterable<String>.empty();
+                if (textEditingValue.text.isEmpty) {
+                  return const Iterable<String>.empty();
+                }
                 final list = whereSpentSuggestionsAsync.value ?? [];
                 return list.where((option) {
-                  return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                  return option.toLowerCase().contains(
+                    textEditingValue.text.toLowerCase(),
+                  );
                 });
               },
-              fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-                return TextField(
-                  controller: controller,
-                  focusNode: focusNode,
-                  decoration: InputDecoration(
-                    hintText: 'e.g. Canteen Lunch, Metro Recharge, Decathlon',
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                    prefixIcon: const Icon(Icons.storefront_outlined, size: 20, color: Color(0xFF64748B)),
-                  ),
-                );
-              },
+              fieldViewBuilder:
+                  (context, controller, focusNode, onFieldSubmitted) {
+                    return TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      decoration: const InputDecoration(
+                        hintText:
+                            'e.g. Canteen Lunch, Metro Recharge, Decathlon',
+                        prefixIcon: Icon(LucideIcons.store, size: 18),
+                      ),
+                    );
+                  },
               optionsViewBuilder: (context, onSelected, options) {
                 return Align(
                   alignment: Alignment.topLeft,
                   child: Material(
                     elevation: 4,
+                    color: isDark ? AppColors.cardDark : Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     child: SizedBox(
                       width: MediaQuery.of(context).size.width - 40,
@@ -412,27 +474,48 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
                     children: [
                       const Text(
                         'DATE',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.neutralSlate,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       InkWell(
                         onTap: _pickDate,
                         borderRadius: BorderRadius.circular(14),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
+                            color: isDark
+                                ? AppColors.cardDark
+                                : const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(
+                              color: isDark
+                                  ? AppColors.borderDark
+                                  : AppColors.borderLight,
+                            ),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.calendar_today_rounded, size: 18, color: Color(0xFF0D9488)),
+                              const Icon(
+                                LucideIcons.calendar,
+                                size: 18,
+                                color: AppColors.emerald,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   DateFormatter.formatShortDate(_selectedDate),
-                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
                             ],
@@ -451,28 +534,50 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
                     children: [
                       const Text(
                         'PAYMENT MODE',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.neutralSlate,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: isDark
+                              ? AppColors.cardDark
+                              : const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(
+                            color: isDark
+                                ? AppColors.borderDark
+                                : AppColors.borderLight,
+                          ),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             isExpanded: true,
                             value: _selectedPaymentMode,
+                            dropdownColor: isDark
+                                ? AppColors.cardDark
+                                : Colors.white,
                             items: AppConstants.defaultPaymentModes.map((mode) {
                               return DropdownMenuItem(
                                 value: mode,
-                                child: Text(mode, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                                child: Text(
+                                  mode,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                               );
                             }).toList(),
                             onChanged: (val) {
-                              if (val != null) setState(() => _selectedPaymentMode = val);
+                              if (val != null) {
+                                setState(() => _selectedPaymentMode = val);
+                              }
                             },
                           ),
                         ),
@@ -487,14 +592,9 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
             // Note (Optional)
             TextField(
               controller: _noteController,
-              decoration: InputDecoration(
-                hintText: 'Notes (e.g. Treat for friends, urgent)',
-                filled: true,
-                fillColor: const Color(0xFFF8FAFC),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                prefixIcon: const Icon(Icons.sticky_note_2_outlined, size: 18, color: Color(0xFF64748B)),
+              decoration: const InputDecoration(
+                hintText: 'Notes (e.g. Canteen treat, urgent stationery)',
+                prefixIcon: Icon(LucideIcons.stickyNote, size: 18),
               ),
             ),
             const SizedBox(height: 14),
@@ -502,34 +602,61 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
             // Toggle Split with Friends
             if (widget.existingExpense == null)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
+                  color: isDark
+                      ? AppColors.cardDark
+                      : AppColors.teal.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.teal.withValues(alpha: 0.25),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.people_outline, color: Color(0xFF16A34A)),
+                    const Icon(
+                      LucideIcons.users,
+                      color: AppColors.teal,
+                      size: 20,
+                    ),
                     const SizedBox(width: 10),
                     const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Split this with friends?', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF15803D))),
-                          Text('Divide the bill and track who owes you', style: TextStyle(fontSize: 11, color: Color(0xFF166534))),
+                          Text(
+                            'Split this with friends?',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: AppColors.teal,
+                            ),
+                          ),
+                          Text(
+                            'Divide the bill and track who owes you',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.neutralSlate,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                     Switch(
                       value: _splitWithFriends,
-                      activeThumbColor: const Color(0xFF16A34A),
-                      onChanged: (val) => setState(() => _splitWithFriends = val),
+                      activeThumbColor: AppColors.teal,
+                      onChanged: (val) =>
+                          setState(() => _splitWithFriends = val),
                     ),
                   ],
                 ),
               ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 20),
 
             // Save Button
             SizedBox(
@@ -538,13 +665,21 @@ class _AddEditExpenseSheetState extends ConsumerState<AddEditExpenseSheet> {
               child: ElevatedButton(
                 onPressed: _saveExpense,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _splitWithFriends ? const Color(0xFF0D9488) : AppConstants.primaryBlue,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  backgroundColor: _splitWithFriends
+                      ? AppColors.teal
+                      : AppColors.emerald,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 0,
                 ),
                 child: Text(
-                  _splitWithFriends ? 'Continue to Split Friends 👥' : 'Save Expense 💾',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
+                  _splitWithFriends ? 'Continue to Split Bill' : 'Save Expense',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),

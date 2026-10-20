@@ -14,8 +14,18 @@ class DateFormatter {
   }
 
   static const List<String> months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   static String getMonthName(int month) {
@@ -25,7 +35,9 @@ class DateFormatter {
 
   /// Calculates number of days in a given month and year
   static int getDaysInMonth(int year, int month) {
-    final nextMonth = month == 12 ? DateTime(year + 1, 1, 1) : DateTime(year, month + 1, 1);
+    final nextMonth = month == 12
+        ? DateTime(year + 1, 1, 1)
+        : DateTime(year, month + 1, 1);
     return nextMonth.subtract(const Duration(days: 1)).day;
   }
 

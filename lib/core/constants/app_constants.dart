@@ -1,25 +1,27 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
 class AppConstants {
-  static const String appName = 'PocketPlan';
-  static const String appTagline = 'Smart Budgeting & Friends Hisab';
+  static const String appName = 'Hisab';
+  static const String appTagline = 'Smart Budgeting & Group Expense Hisab';
 
   // Currency
   static const String currencySymbol = '₹';
   static const String currencyCode = 'INR';
 
-  // Semantic Colors
-  static const Color primaryBlue = Color(0xFF1A365D); // Deep Slate Blue
-  static const Color primaryTeal = Color(0xFF0D9488); // Modern Teal
-  static const Color accentIndigo = Color(0xFF4F46E5);
-  static const Color backgroundLight = Color(0xFFF6F7FB);
-  static const Color surfaceLight = Colors.white;
-  static const Color borderLight = Color(0xFFE2E8F0);
+  // Semantic Colors mapped from AppColors
+  static const Color primaryEmerald = AppColors.emerald;
+  static const Color primaryTeal = AppColors.teal;
+  static const Color primaryBlue = AppColors.emerald; // backward compatibility
+  static const Color accentIndigo = AppColors.accent;
+  static const Color backgroundLight = AppColors.bgLight;
+  static const Color surfaceLight = AppColors.surfaceLight;
+  static const Color borderLight = AppColors.borderLight;
 
   // Status Colors
-  static const Color statusSafeGreen = Color(0xFF10B981);
-  static const Color statusWarningOrange = Color(0xFFF59E0B);
-  static const Color statusDangerRed = Color(0xFFEF4444);
+  static const Color statusSafeGreen = AppColors.safeGreen;
+  static const Color statusWarningOrange = AppColors.warningAmber;
+  static const Color statusDangerRed = AppColors.dangerRed;
 
   // Default Categories Seed Data (paise values: 100 paise = 1 INR)
   static const List<DefaultCategoryData> defaultCategories = [

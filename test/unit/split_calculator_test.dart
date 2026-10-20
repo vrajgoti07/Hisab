@@ -22,7 +22,10 @@ void main() {
       expect(result.shares.length, 4);
       expect(result.mySharePaise, 30000);
       expect(result.friendsSharePaise, 90000);
-      expect(result.shares.fold<int>(0, (sum, s) => sum + s.shareAmountPaise), 120000);
+      expect(
+        result.shares.fold<int>(0, (sum, s) => sum + s.shareAmountPaise),
+        120000,
+      );
       for (final s in result.shares) {
         expect(s.shareAmountPaise, 30000);
       }
@@ -44,7 +47,10 @@ void main() {
 
       expect(result.isValid, isTrue);
       expect(result.shares.length, 3);
-      final totalSum = result.shares.fold<int>(0, (sum, s) => sum + s.shareAmountPaise);
+      final totalSum = result.shares.fold<int>(
+        0,
+        (sum, s) => sum + s.shareAmountPaise,
+      );
       expect(totalSum, 100);
       expect(result.shares[0].shareAmountPaise, 34);
       expect(result.shares[1].shareAmountPaise, 33);
@@ -53,8 +59,16 @@ void main() {
 
     test('Exact split validates that sum matches total bill', () {
       final participants = [
-        const SplitParticipant(personId: null, name: 'Me', exactAmountPaise: 40000),
-        const SplitParticipant(personId: 1, name: 'Rahul', exactAmountPaise: 60000),
+        const SplitParticipant(
+          personId: null,
+          name: 'Me',
+          exactAmountPaise: 40000,
+        ),
+        const SplitParticipant(
+          personId: 1,
+          name: 'Rahul',
+          exactAmountPaise: 60000,
+        ),
       ];
 
       final validResult = SplitCalculator.calculate(
@@ -76,30 +90,40 @@ void main() {
       expect(invalidResult.errorMessage, contains('must equal total bill'));
     });
 
-    test('Percentage split distributes accurately and adjusts rounding on last person', () {
-      final participants = [
-        const SplitParticipant(personId: null, name: 'Me', percentage: 50.0),
-        const SplitParticipant(personId: 1, name: 'Rahul', percentage: 25.0),
-        const SplitParticipant(personId: 2, name: 'Priya', percentage: 25.0),
-      ];
+    test(
+      'Percentage split distributes accurately and adjusts rounding on last person',
+      () {
+        final participants = [
+          const SplitParticipant(personId: null, name: 'Me', percentage: 50.0),
+          const SplitParticipant(personId: 1, name: 'Rahul', percentage: 25.0),
+          const SplitParticipant(personId: 2, name: 'Priya', percentage: 25.0),
+        ];
 
-      final result = SplitCalculator.calculate(
-        totalAmountPaise: 100000,
-        splitType: SplitType.percentage,
-        participants: participants,
-      );
+        final result = SplitCalculator.calculate(
+          totalAmountPaise: 100000,
+          splitType: SplitType.percentage,
+          participants: participants,
+        );
 
-      expect(result.isValid, isTrue);
-      expect(result.shares[0].shareAmountPaise, 50000);
-      expect(result.shares[1].shareAmountPaise, 25000);
-      expect(result.shares[2].shareAmountPaise, 25000);
-      expect(result.shares.fold<int>(0, (sum, s) => sum + s.shareAmountPaise), 100000);
-    });
+        expect(result.isValid, isTrue);
+        expect(result.shares[0].shareAmountPaise, 50000);
+        expect(result.shares[1].shareAmountPaise, 25000);
+        expect(result.shares[2].shareAmountPaise, 25000);
+        expect(
+          result.shares.fold<int>(0, (sum, s) => sum + s.shareAmountPaise),
+          100000,
+        );
+      },
+    );
 
     test('Shares ratio split calculates correct proportional shares', () {
       final participants = [
         const SplitParticipant(personId: null, name: 'Me', shareCount: 1),
-        const SplitParticipant(personId: 1, name: 'Rahul', shareCount: 2), // Rahul pays double share
+        const SplitParticipant(
+          personId: 1,
+          name: 'Rahul',
+          shareCount: 2,
+        ), // Rahul pays double share
       ];
 
       // 30000 paise split 1:2 -> Me: 10000, Rahul: 20000
@@ -112,7 +136,10 @@ void main() {
       expect(result.isValid, isTrue);
       expect(result.shares[0].shareAmountPaise, 10000);
       expect(result.shares[1].shareAmountPaise, 20000);
-      expect(result.shares.fold<int>(0, (sum, s) => sum + s.shareAmountPaise), 30000);
+      expect(
+        result.shares.fold<int>(0, (sum, s) => sum + s.shareAmountPaise),
+        30000,
+      );
     });
   });
 }

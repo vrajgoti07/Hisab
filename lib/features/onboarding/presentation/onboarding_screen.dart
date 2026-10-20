@@ -1,8 +1,9 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../data/database/app_database.dart';
 import '../../../data/providers/app_providers.dart';
@@ -19,9 +20,14 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  bool _isSaving = false;
 
-  final TextEditingController _nameController = TextEditingController(text: 'Student');
-  final TextEditingController _budgetController = TextEditingController(text: '25000');
+  final TextEditingController _nameController = TextEditingController(
+    text: 'Student',
+  );
+  final TextEditingController _budgetController = TextEditingController(
+    text: '25000',
+  );
 
   @override
   void dispose() {
@@ -32,37 +38,58 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _completeOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('onboarding_completed', true);
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
 
-    final repo = ref.read(repositoryProvider);
-    await repo.initializeDefaultsIfNeeded();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('onboarding_completed', true);
 
-    // Set user name
-    final name = _nameController.text.trim();
-    if (name.isNotEmpty) {
-      await repo.updateAppSettings(AppSettingsCompanion(userName: drift.Value(name)));
+      final repo = ref.read(repositoryProvider);
+      await repo.initializeDefaultsIfNeeded();
+
+      // Set user name
+      final name = _nameController.text.trim();
+      if (name.isNotEmpty) {
+        await repo.updateAppSettings(
+          AppSettingsCompanion(userName: drift.Value(name)),
+        );
+      }
+
+      // Set initial budget
+      final budgetPaise =
+          CurrencyFormatter.parseToPaise(_budgetController.text) ?? 2500000;
+      final now = DateTime.now();
+      await repo.setMonthlyBudget(
+        year: now.year,
+        month: now.month,
+        amountPaise: budgetPaise,
+      );
+
+      // Seed demo data so user starts with a live, beautiful dashboard
+      await repo.seedDemoData();
+
+      widget.onCompleted();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Setup completed with note: $e'),
+            backgroundColor: AppColors.emerald,
+          ),
+        );
+        widget.onCompleted();
+      }
     }
-
-    // Set initial budget
-    final budgetPaise = CurrencyFormatter.parseToPaise(_budgetController.text) ?? 2500000;
-    final now = DateTime.now();
-    await repo.setMonthlyBudget(
-      year: now.year,
-      month: now.month,
-      amountPaise: budgetPaise,
-    );
-
-    // Seed demo data so user starts with a live, beautiful dashboard
-    await repo.seedDemoData();
-
-    widget.onCompleted();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
+      backgroundColor: isDark ? AppColors.bgDark : AppColors.bgLight,
       body: SafeArea(
         child: Column(
           children: [
@@ -74,22 +101,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 children: [
                   // Slide 1: Budget & Safe Daily Spend
                   _buildSlide(
-                    emoji: '🎯',
+                    icon: LucideIcons.shieldCheck,
                     title: 'Discipline-First Budgeting',
-                    subtitle: 'Set your monthly pocket money or salary first. PocketPlan automatically calculates your "Safe Daily Spend" so you never run out of cash.',
-                    color: const Color(0xFF1A365D),
+                    subtitle:
+                        'Set your monthly pocket money or salary first. Hisab calculates your "Safe Daily Spend" so you never run out of money before month-end.',
+                    color: AppColors.emerald,
+                    isDark: isDark,
                   ),
 
                   // Slide 2: Friends & Split Module
                   _buildSlide(
-                    emoji: '🍕',
+                    icon: LucideIcons.users,
                     title: 'Fair Group Splits & Hisab',
-                    subtitle: 'Paid for group dinners or trips? PocketPlan protects your personal budget—only YOUR share is counted as an expense, while what friends owe you is tracked separately.',
-                    color: const Color(0xFF0D9488),
+                    subtitle:
+                        'Paid for group outings or shared bills? Hisab protects your budget: only YOUR share counts as your expense, while friends\' shares are tracked accurately.',
+                    color: AppColors.teal,
+                    isDark: isDark,
                   ),
 
                   // Slide 3: Parent-Friendly Reports & Setup
-                  _buildSetupSlide(),
+                  _buildSetupSlide(isDark),
                 ],
               ),
             ),
@@ -110,7 +141,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         width: isSel ? 24 : 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: isSel ? AppConstants.primaryBlue : const Color(0xFFCBD5E1),
+                          color: isSel
+                              ? AppColors.emerald
+                              : (isDark
+                                    ? AppColors.borderDark
+                                    : const Color(0xFFCBD5E1)),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       );
@@ -119,22 +154,57 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
                   // Next / Get Started Button
                   ElevatedButton(
-                    onPressed: () {
-                      if (_currentPage < 2) {
-                        _pageController.nextPage(duration: const Duration(milliseconds: 350), curve: Curves.easeOut);
-                      } else {
-                        _completeOnboarding();
-                      }
-                    },
+                    onPressed: _isSaving
+                        ? null
+                        : () {
+                            if (_currentPage < 2) {
+                              _pageController.nextPage(
+                                duration: const Duration(milliseconds: 350),
+                                curve: Curves.easeOut,
+                              );
+                            } else {
+                              _completeOnboarding();
+                            }
+                          },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppConstants.primaryBlue,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      backgroundColor: AppColors.emerald,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
-                    child: Text(
-                      _currentPage == 2 ? 'Get Started 🚀' : 'Next',
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white),
-                    ),
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _currentPage == 2 ? 'Get Started' : 'Next',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Icon(
+                                LucideIcons.arrowRight,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
                   ),
                 ],
               ),
@@ -146,10 +216,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildSlide({
-    required String emoji,
+    required IconData icon,
     required String title,
     required String subtitle,
     required Color color,
+    required bool isDark,
   }) {
     return Padding(
       padding: const EdgeInsets.all(32),
@@ -157,33 +228,37 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 120,
-            height: 120,
+            width: 110,
+            height: 110,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
+              color: color.withValues(alpha: isDark ? 0.2 : 0.12),
               shape: BoxShape.circle,
             ),
-            child: Center(child: Text(emoji, style: const TextStyle(fontSize: 54))),
+            child: Center(child: Icon(icon, size: 50, color: color)),
           ),
           const SizedBox(height: 36),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Poppins',
               fontSize: 24,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
+              color: isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
             ),
           ),
           const SizedBox(height: 14),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               height: 1.5,
-              color: Color(0xFF475569),
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
             ),
           ),
         ],
@@ -191,65 +266,110 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  Widget _buildSetupSlide() {
+  Widget _buildSetupSlide(bool isDark) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 20),
-          const Text('Almost Ready! 🎉', style: TextStyle(fontFamily: 'Poppins', fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(
+                LucideIcons.sparkles,
+                color: AppColors.emerald,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Personalize Hisab',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimaryLight,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 6),
-          const Text('Tell us your details to personalize your PocketPlan:', style: TextStyle(fontSize: 13, color: Color(0xFF475569))),
+          Text(
+            'Configure your profile to start tracking your pocket budget and friends hisab:',
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
+          ),
           const SizedBox(height: 24),
 
           // Name
-          const Text('YOUR NAME', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+          const Text(
+            'YOUR NAME',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.neutralSlate,
+              letterSpacing: 0.5,
+            ),
+          ),
           const SizedBox(height: 6),
           TextField(
             controller: _nameController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               hintText: 'e.g. Aryan or Priya',
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-              prefixIcon: const Icon(Icons.person_outline),
+              prefixIcon: Icon(LucideIcons.user, size: 20),
             ),
           ),
           const SizedBox(height: 18),
 
           // Pocket Money / Salary
-          const Text('MONTHLY POCKET MONEY / SALARY (₹)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+          const Text(
+            'MONTHLY POCKET MONEY / SALARY (₹)',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.neutralSlate,
+              letterSpacing: 0.5,
+            ),
+          ),
           const SizedBox(height: 6),
           TextField(
             controller: _budgetController,
             keyboardType: TextInputType.number,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               hintText: 'e.g. 25000',
               prefixText: '₹ ',
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-              prefixIcon: const Icon(Icons.account_balance_wallet_outlined),
+              prefixIcon: Icon(LucideIcons.wallet, size: 20),
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
 
           // Default Categories Preview Box
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFEEF2F6),
+              color: isDark ? AppColors.cardDark : const Color(0xFFEEF2F6),
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? AppColors.borderDark : AppColors.borderLight,
+              ),
             ),
             child: const Row(
               children: [
-                Icon(Icons.check_circle_outline, color: Color(0xFF0D9488)),
+                Icon(
+                  LucideIcons.circleCheck,
+                  color: AppColors.emerald,
+                  size: 20,
+                ),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Default categories (Food, Travel, Study, Shopping, Mobile, Entertainment, Health, Savings) will be pre-configured with limits.',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF334155), height: 1.3),
+                    'Default categories (Food, Travel, Study, Shopping, Mobile, Entertainment, Health, Savings) will be pre-configured with monthly limits.',
+                    style: TextStyle(fontSize: 12, height: 1.4),
                   ),
                 ),
               ],

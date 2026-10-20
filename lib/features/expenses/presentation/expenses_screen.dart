@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/app_constants.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../data/database/app_database.dart';
@@ -45,7 +46,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
           content: Text('Deleted "${expense.whereSpent}"'),
           action: SnackBarAction(
             label: 'UNDO',
-            textColor: Colors.amber,
+            textColor: AppColors.tealLight,
             onPressed: () async {
               await repo.insertExpense(expense.toCompanion(false));
             },
@@ -60,6 +61,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
     final activeMY = ref.watch(activeMonthYearProvider);
     final expensesAsync = ref.watch(activeMonthlyExpensesStreamProvider);
     final categoriesAsync = ref.watch(activeCategoriesStreamProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final allExpenses = expensesAsync.value ?? [];
     final categories = categoriesAsync.value ?? [];
@@ -73,10 +75,12 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
         final matchNote = (e.note ?? '').toLowerCase().contains(query);
         if (!matchWhere && !matchNote) return false;
       }
-      if (_selectedCategoryFilter != null && e.categoryId != _selectedCategoryFilter) {
+      if (_selectedCategoryFilter != null &&
+          e.categoryId != _selectedCategoryFilter) {
         return false;
       }
-      if (_selectedPaymentModeFilter != null && e.paymentMode != _selectedPaymentModeFilter) {
+      if (_selectedPaymentModeFilter != null &&
+          e.paymentMode != _selectedPaymentModeFilter) {
         return false;
       }
       return true;
@@ -89,22 +93,26 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
       grouped.putIfAbsent(dateKey, () => []).add(exp);
     }
 
-    final totalFilteredSpent = filteredExpenses.fold<int>(0, (sum, e) => sum + e.amountPaise);
+    final totalFilteredSpent = filteredExpenses.fold<int>(
+      0,
+      (sum, e) => sum + e.amountPaise,
+    );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
       appBar: AppBar(
         title: Text('Expenses (${activeMY.displayName})'),
-        backgroundColor: const Color(0xFFF6F7FB),
         actions: [
           IconButton(
-            icon: const Icon(Icons.calendar_month_outlined),
-            tooltip: 'Change Month',
-            onPressed: () {
-              // Month Switcher popup
-              _showMonthPicker(context);
-            },
+            icon: const Icon(LucideIcons.calendar, size: 20),
+            tooltip: 'Select Month',
+            onPressed: () => _showMonthPicker(context, isDark),
           ),
+          IconButton(
+            icon: const Icon(LucideIcons.plus, size: 20),
+            tooltip: 'Log Expense',
+            onPressed: () => _showAddExpenseModal(context),
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
@@ -115,16 +123,11 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search expenses by name or note...',
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF94A3B8)),
+                hintText: 'Search expenses by description or note...',
+                prefixIcon: const Icon(LucideIcons.search, size: 18),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear_rounded),
+                        icon: const Icon(LucideIcons.x, size: 18),
                         onPressed: () {
                           _searchController.clear();
                           setState(() => _searchQuery = '');
@@ -136,7 +139,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
             ),
           ),
 
-          // Horizontal Filter Chips (Categories & Payment Modes)
+          // Horizontal Filter Chips
           SizedBox(
             height: 38,
             child: ListView(
@@ -146,33 +149,60 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                 FilterChip(
                   label: const Text('All Categories'),
                   selected: _selectedCategoryFilter == null,
-                  onSelected: (_) => setState(() => _selectedCategoryFilter = null),
-                  selectedColor: AppConstants.primaryBlue,
+                  onSelected: (_) =>
+                      setState(() => _selectedCategoryFilter = null),
+                  selectedColor: AppColors.emerald,
                   labelStyle: TextStyle(
-                    color: _selectedCategoryFilter == null ? Colors.white : const Color(0xFF334155),
-                    fontSize: 11,
+                    color: _selectedCategoryFilter == null
+                        ? Colors.white
+                        : (isDark
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textSecondaryLight),
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
-                  backgroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  backgroundColor: isDark ? AppColors.cardDark : Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: BorderSide(
+                      color: isDark
+                          ? AppColors.borderDark
+                          : AppColors.borderLight,
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 ...categories.map((cat) {
                   final isSel = _selectedCategoryFilter == cat.id;
                   return Padding(
-                    padding: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.only(right: 8),
                     child: FilterChip(
                       label: Text('${cat.emoji} ${cat.name}'),
                       selected: isSel,
-                      onSelected: (_) => setState(() => _selectedCategoryFilter = isSel ? null : cat.id),
-                      selectedColor: AppConstants.primaryBlue,
+                      onSelected: (_) => setState(
+                        () => _selectedCategoryFilter = isSel ? null : cat.id,
+                      ),
+                      selectedColor: AppColors.emerald,
                       labelStyle: TextStyle(
-                        color: isSel ? Colors.white : const Color(0xFF334155),
-                        fontSize: 11,
+                        color: isSel
+                            ? Colors.white
+                            : (isDark
+                                  ? AppColors.textPrimaryDark
+                                  : AppColors.textSecondaryLight),
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      backgroundColor: isDark
+                          ? AppColors.cardDark
+                          : Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(
+                          color: isDark
+                              ? AppColors.borderDark
+                              : AppColors.borderLight,
+                        ),
+                      ),
                     ),
                   );
                 }),
@@ -187,62 +217,122 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('${filteredExpenses.length} Transactions', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+                Text(
+                  '${filteredExpenses.length} Transactions',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.neutralSlate,
+                  ),
+                ),
                 Text(
                   'Total: ${CurrencyFormatter.formatPaise(totalFilteredSpent)}',
-                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
           ),
-          const Divider(height: 12),
+          Divider(
+            height: 12,
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          ),
 
           // Grouped Expense List
           Expanded(
             child: filteredExpenses.isEmpty
                 ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.receipt_long_outlined, size: 54, color: Color(0xFF94A3B8)),
-                        const SizedBox(height: 10),
-                        const Text('No expenses found', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                        const SizedBox(height: 4),
-                        const Text('Tap "+" to log your first expense of the month.', style: TextStyle(color: Color(0xFF64748B), fontSize: 12)),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () => _showAddExpenseModal(context),
-                          icon: const Icon(Icons.add, color: Colors.white),
-                          label: const Text('Add Expense', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          style: ElevatedButton.styleFrom(backgroundColor: AppConstants.primaryBlue),
-                        ),
-                      ],
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.emerald.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              LucideIcons.receiptText,
+                              size: 44,
+                              color: AppColors.emerald,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          const Text(
+                            'No Expenses Found',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'No expenses logged matching the current filter.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColors.neutralSlate,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          ElevatedButton.icon(
+                            onPressed: () => _showAddExpenseModal(context),
+                            icon: const Icon(LucideIcons.plus, size: 16),
+                            label: const Text('Log Expense'),
+                          ),
+                        ],
+                      ),
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
                     itemCount: grouped.length,
                     itemBuilder: (context, groupIndex) {
                       final dateKey = grouped.keys.elementAt(groupIndex);
                       final dayExpenses = grouped[dateKey]!;
-                      final dayTotal = dayExpenses.fold<int>(0, (sum, e) => sum + e.amountPaise);
+                      final dayTotal = dayExpenses.fold<int>(
+                        0,
+                        (sum, e) => sum + e.amountPaise,
+                      );
 
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Date Header with Day Total
                           Padding(
-                            padding: const EdgeInsets.only(left: 4, top: 12, bottom: 6, right: 4),
+                            padding: const EdgeInsets.only(
+                              left: 4,
+                              top: 12,
+                              bottom: 6,
+                              right: 4,
+                            ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
                                   dateKey,
-                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B), letterSpacing: 0.5),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.neutralSlate,
+                                    letterSpacing: 0.5,
+                                  ),
                                 ),
                                 Text(
                                   CurrencyFormatter.formatPaise(dayTotal),
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ],
                             ),
@@ -258,37 +348,67 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                                 alignment: Alignment.centerRight,
                                 padding: const EdgeInsets.only(right: 20),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFEF4444),
+                                  color: AppColors.dangerRed,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
-                                child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
+                                child: const Icon(
+                                  LucideIcons.trash2,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
                               ),
-                              onDismissed: (_) => _deleteExpenseWithUndo(expense),
+                              onDismissed: (_) =>
+                                  _deleteExpenseWithUndo(expense),
                               child: Card(
                                 margin: const EdgeInsets.only(bottom: 8),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                  side: const BorderSide(color: Color(0xFFE2E8F0)),
-                                ),
                                 child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 4,
+                                  ),
                                   leading: CircleAvatar(
                                     radius: 20,
                                     backgroundColor: cat != null
-                                        ? Color(int.parse(cat.colorHex.replaceFirst('#', '0xFF'))).withValues(alpha: 0.15)
+                                        ? Color(
+                                            int.parse(
+                                              cat.colorHex.replaceFirst(
+                                                '#',
+                                                '0xFF',
+                                              ),
+                                            ),
+                                          ).withValues(alpha: 0.15)
                                         : const Color(0xFFF1F5F9),
-                                    child: Text(cat?.emoji ?? '💸', style: const TextStyle(fontSize: 18)),
+                                    child: Text(
+                                      cat?.emoji ?? '💸',
+                                      style: const TextStyle(fontSize: 18),
+                                    ),
                                   ),
-                                  title: Text(expense.whereSpent, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                                  title: Text(
+                                    expense.whereSpent,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
                                   subtitle: Text(
                                     '${cat?.name ?? "General"} • ${expense.paymentMode}${expense.note != null && expense.note!.isNotEmpty ? " • ${expense.note}" : ""}',
-                                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.neutralSlate,
+                                    ),
                                   ),
                                   trailing: Text(
-                                    CurrencyFormatter.formatPaise(expense.amountPaise),
-                                    style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF0F172A)),
+                                    CurrencyFormatter.formatPaise(
+                                      expense.amountPaise,
+                                    ),
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                    ),
                                   ),
-                                  onTap: () => _showAddExpenseModal(context, expense),
+                                  onTap: () =>
+                                      _showAddExpenseModal(context, expense),
                                 ),
                               ),
                             );
@@ -300,27 +420,30 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddExpenseModal(context),
-        backgroundColor: AppConstants.primaryBlue,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Add Expense', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-      ),
     );
   }
 
-  void _showMonthPicker(BuildContext context) {
+  void _showMonthPicker(BuildContext context, bool isDark) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (_) {
         return Container(
           padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Select Active Month', style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 14),
+              const Text(
+                'Select Active Month',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 16),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -332,14 +455,23 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                     label: Text(DateFormatter.getMonthName(m)),
                     selected: isSel,
                     onSelected: (_) {
-                      ref.read(activeMonthYearProvider.notifier).state = currentMY.copyWith(month: m);
+                      ref.read(activeMonthYearProvider.notifier).state =
+                          currentMY.copyWith(month: m);
                       Navigator.of(context).pop();
                     },
-                    selectedColor: AppConstants.primaryBlue,
-                    labelStyle: TextStyle(color: isSel ? Colors.white : const Color(0xFF334155), fontSize: 12),
+                    selectedColor: AppColors.emerald,
+                    labelStyle: TextStyle(
+                      color: isSel
+                          ? Colors.white
+                          : (isDark
+                                ? AppColors.textPrimaryDark
+                                : AppColors.textSecondaryLight),
+                      fontSize: 12,
+                    ),
                   );
                 }),
               ),
+              const SizedBox(height: 16),
             ],
           ),
         );

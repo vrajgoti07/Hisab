@@ -1,7 +1,8 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/app_constants.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../data/database/app_database.dart';
 import '../../../data/providers/app_providers.dart';
 
@@ -15,10 +16,16 @@ class AddPersonDialog extends ConsumerStatefulWidget {
 class _AddPersonDialogState extends ConsumerState<AddPersonDialog> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  String _selectedColor = '#3B82F6';
+  String _selectedColor = '#0D9488';
 
   final List<String> _avatarColors = [
-    '#3B82F6', '#0D9488', '#10B981', '#EC4899', '#8B5CF6', '#F59E0B', '#EF4444'
+    '#047857',
+    '#0D9488',
+    '#0284C7',
+    '#8B5CF6',
+    '#EC4899',
+    '#F59E0B',
+    '#EF4444',
   ];
 
   @override
@@ -41,7 +48,11 @@ class _AddPersonDialogState extends ConsumerState<AddPersonDialog> {
     await repo.insertPerson(
       PersonsCompanion.insert(
         name: name,
-        phone: drift.Value(_phoneController.text.trim().isEmpty ? null : _phoneController.text.trim()),
+        phone: drift.Value(
+          _phoneController.text.trim().isEmpty
+              ? null
+              : _phoneController.text.trim(),
+        ),
         avatarColor: drift.Value(_selectedColor),
       ),
     );
@@ -51,7 +62,7 @@ class _AddPersonDialogState extends ConsumerState<AddPersonDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('$name added to Friends! 👥'),
-          backgroundColor: const Color(0xFF0D9488),
+          backgroundColor: AppColors.emerald,
         ),
       );
     }
@@ -62,7 +73,7 @@ class _AddPersonDialogState extends ConsumerState<AddPersonDialog> {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(22),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,38 +81,51 @@ class _AddPersonDialogState extends ConsumerState<AddPersonDialog> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Add New Friend 👤', style: TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700)),
-                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.of(context).pop()),
+                const Text(
+                  'Add New Friend',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(LucideIcons.x, size: 20),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             TextField(
               controller: _nameController,
-              decoration: InputDecoration(
+              autofocus: true,
+              decoration: const InputDecoration(
                 labelText: 'Friend\'s Name',
-                hintText: 'e.g. Rahul Sharma',
-                filled: true,
-                fillColor: const Color(0xFFF8FAFC),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                prefixIcon: const Icon(Icons.person_outline_rounded),
+                hintText: 'e.g. Rahul Sharma or Priya',
+                prefixIcon: Icon(LucideIcons.user, size: 18),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             TextField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Phone / WhatsApp (Optional)',
                 hintText: 'e.g. 9876543210',
-                filled: true,
-                fillColor: const Color(0xFFF8FAFC),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                prefixIcon: const Icon(Icons.phone_outlined),
+                prefixIcon: Icon(LucideIcons.phone, size: 18),
               ),
             ),
-            const SizedBox(height: 14),
-            const Text('AVATAR COLOR', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
+            const Text(
+              'AVATAR COLOR',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.neutralSlate,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: _avatarColors.map((hex) {
@@ -112,23 +136,37 @@ class _AddPersonDialogState extends ConsumerState<AddPersonDialog> {
                   child: CircleAvatar(
                     radius: 16,
                     backgroundColor: color,
-                    child: isSelected ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
+                    child: isSelected
+                        ? const Icon(
+                            LucideIcons.check,
+                            size: 16,
+                            color: Colors.white,
+                          )
+                        : null,
                   ),
                 );
               }).toList(),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 22),
             SizedBox(
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
                 onPressed: _savePerson,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppConstants.primaryBlue,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  backgroundColor: AppColors.emerald,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   elevation: 0,
                 ),
-                child: const Text('Add Friend', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white)),
+                child: const Text(
+                  'Add Friend',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ],

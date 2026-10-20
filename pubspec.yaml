@@ -45,6 +45,7 @@ dependencies:
   # Preferences & Utils
   shared_preferences: ^2.5.2
   uuid: ^4.5.1
+  lucide_icons_flutter: ^4.0.0
 
 dev_dependencies:
   flutter_test:

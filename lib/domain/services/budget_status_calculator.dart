@@ -76,7 +76,9 @@ class BudgetStatusCalculator {
   }) {
     final totalAvailable = budgetPaise + carriedAmountPaise;
     final remaining = totalAvailable - totalPersonalSpentPaise;
-    final pctUsed = totalAvailable > 0 ? (totalPersonalSpentPaise / totalAvailable) : 0.0;
+    final pctUsed = totalAvailable > 0
+        ? (totalPersonalSpentPaise / totalAvailable)
+        : 0.0;
 
     final safeDays = max(1, daysLeftInMonth);
     final elapsedDays = max(1, daysElapsedInMonth);

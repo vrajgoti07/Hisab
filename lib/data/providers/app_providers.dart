@@ -1,10 +1,58 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:drift/drift.dart' as drift;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/utils/date_formatter.dart';
 import '../../domain/services/balance_calculator.dart';
 import '../../domain/services/budget_status_calculator.dart';
 import '../../domain/services/debt_simplifier.dart';
 import '../database/app_database.dart';
 import '../repositories/pocketplan_repository.dart';
+
+// SharedPreferences Provider (can be overridden in ProviderScope)
+final sharedPreferencesProvider = Provider<SharedPreferences?>((ref) => null);
+
+// Reactive ThemeMode Provider that syncs with SharedPreferences and DB
+class ThemeModeNotifier extends StateNotifier<ThemeMode> {
+  final SharedPreferences? _prefs;
+  final PocketPlanRepository _repo;
+
+  ThemeModeNotifier(this._prefs, this._repo) : super(ThemeMode.light) {
+    _loadInitialTheme();
+  }
+
+  void _loadInitialTheme() {
+    final saved = _prefs?.getString('app_theme_mode');
+    if (saved == 'dark') {
+      state = ThemeMode.dark;
+    } else if (saved == 'system') {
+      state = ThemeMode.system;
+    } else {
+      state = ThemeMode.light;
+    }
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    state = mode;
+    final modeString = mode == ThemeMode.dark
+        ? 'dark'
+        : (mode == ThemeMode.system ? 'system' : 'light');
+    await _prefs?.setString('app_theme_mode', modeString);
+    try {
+      await _repo.updateAppSettings(
+        AppSettingsCompanion(themeMode: drift.Value(modeString)),
+      );
+    } catch (_) {}
+  }
+}
+
+final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((
+  ref,
+) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  final repo = ref.watch(repositoryProvider);
+  return ThemeModeNotifier(prefs, repo);
+});
 
 // Database Provider
 final databaseProvider = Provider<AppDatabase>((ref) {
@@ -27,10 +75,7 @@ class ActiveMonthYear {
   const ActiveMonthYear({required this.year, required this.month});
 
   ActiveMonthYear copyWith({int? year, int? month}) {
-    return ActiveMonthYear(
-      year: year ?? this.year,
-      month: month ?? this.month,
-    );
+    return ActiveMonthYear(year: year ?? this.year, month: month ?? this.month);
   }
 
   ActiveMonthYear previousMonth() {
@@ -83,7 +128,9 @@ final activeMonthlyBudgetStreamProvider = StreamProvider<MonthlyBudget?>((ref) {
 });
 
 // Monthly Expenses Stream for Active Month
-final activeMonthlyExpensesStreamProvider = StreamProvider<List<Expense>>((ref) {
+final activeMonthlyExpensesStreamProvider = StreamProvider<List<Expense>>((
+  ref,
+) {
   final repo = ref.watch(repositoryProvider);
   final activeMY = ref.watch(activeMonthYearProvider);
   return repo.watchExpensesForMonth(activeMY.year, activeMY.month);
@@ -145,30 +192,54 @@ final dashboardStateProvider = Provider<AsyncValue<DashboardState>>((ref) {
   final expensesAsync = ref.watch(activeMonthlyExpensesStreamProvider);
   final categoriesAsync = ref.watch(activeCategoriesStreamProvider);
 
-  if (budgetAsync.isLoading || expensesAsync.isLoading || categoriesAsync.isLoading) {
+  if (budgetAsync.isLoading ||
+      expensesAsync.isLoading ||
+      categoriesAsync.isLoading) {
     return const AsyncValue.loading();
   }
 
-  if (budgetAsync.hasError) return AsyncValue.error(budgetAsync.error!, budgetAsync.stackTrace!);
-  if (expensesAsync.hasError) return AsyncValue.error(expensesAsync.error!, expensesAsync.stackTrace!);
-  if (categoriesAsync.hasError) return AsyncValue.error(categoriesAsync.error!, categoriesAsync.stackTrace!);
+  if (budgetAsync.hasError) {
+    return AsyncValue.error(budgetAsync.error!, budgetAsync.stackTrace!);
+  }
+  if (expensesAsync.hasError) {
+    return AsyncValue.error(expensesAsync.error!, expensesAsync.stackTrace!);
+  }
+  if (categoriesAsync.hasError) {
+    return AsyncValue.error(
+      categoriesAsync.error!,
+      categoriesAsync.stackTrace!,
+    );
+  }
 
   final budget = budgetAsync.value;
   final expenses = expensesAsync.value ?? [];
   final categories = categoriesAsync.value ?? [];
 
-  final budgetPaise = budget?.amountPaise ?? 2500000; // Default ₹25k if not configured
+  final budgetPaise =
+      budget?.amountPaise ?? 2500000; // Default ₹25k if not configured
   final carriedPaise = budget?.carriedAmountPaise ?? 0;
 
   // Total personal spent = sum of expenses
-  final totalSpentPaise = expenses.fold<int>(0, (sum, e) => sum + e.amountPaise);
+  final totalSpentPaise = expenses.fold<int>(
+    0,
+    (sum, e) => sum + e.amountPaise,
+  );
 
-  final daysInMonth = DateFormatter.getDaysInMonth(activeMY.year, activeMY.month);
-  final daysLeft = DateFormatter.getDaysRemaining(activeMY.year, activeMY.month);
+  final daysInMonth = DateFormatter.getDaysInMonth(
+    activeMY.year,
+    activeMY.month,
+  );
+  final daysLeft = DateFormatter.getDaysRemaining(
+    activeMY.year,
+    activeMY.month,
+  );
   final now = DateTime.now();
   final daysElapsed = (activeMY.year == now.year && activeMY.month == now.month)
       ? now.day
-      : (activeMY.year < now.year || (activeMY.year == now.year && activeMY.month < now.month) ? daysInMonth : 1);
+      : (activeMY.year < now.year ||
+                (activeMY.year == now.year && activeMY.month < now.month)
+            ? daysInMonth
+            : 1);
 
   final monthSummary = BudgetStatusCalculator.computeMonthlySummary(
     budgetPaise: budgetPaise,
@@ -182,20 +253,23 @@ final dashboardStateProvider = Provider<AsyncValue<DashboardState>>((ref) {
   // Category Summaries
   final Map<int, int> catSpendMap = {};
   for (final exp in expenses) {
-    catSpendMap[exp.categoryId] = (catSpendMap[exp.categoryId] ?? 0) + exp.amountPaise;
+    catSpendMap[exp.categoryId] =
+        (catSpendMap[exp.categoryId] ?? 0) + exp.amountPaise;
   }
 
   final List<CategoryBudgetSummary> catSummaries = [];
   for (final cat in categories) {
     final spent = catSpendMap[cat.id] ?? 0;
-    catSummaries.add(BudgetStatusCalculator.computeCategorySummary(
-      categoryId: cat.id,
-      categoryName: cat.name,
-      emoji: cat.emoji,
-      colorHex: cat.colorHex,
-      limitPaise: cat.monthlyLimitPaise,
-      spentPaise: spent,
-    ));
+    catSummaries.add(
+      BudgetStatusCalculator.computeCategorySummary(
+        categoryId: cat.id,
+        categoryName: cat.name,
+        emoji: cat.emoji,
+        colorHex: cat.colorHex,
+        limitPaise: cat.monthlyLimitPaise,
+        spentPaise: spent,
+      ),
+    );
   }
 
   // Top 5 Expenses
@@ -207,26 +281,33 @@ final dashboardStateProvider = Provider<AsyncValue<DashboardState>>((ref) {
   final safeDaily = monthSummary.safeDailySpendPaise;
   final streak = expenses.where((e) => e.amountPaise <= safeDaily).length;
 
-  return AsyncValue.data(DashboardState(
-    monthSummary: monthSummary,
-    categorySummaries: catSummaries,
-    top5Expenses: top5,
-    recentExpenses: expenses.take(10).toList(),
-    daysUnderSafeDailySpendCount: streak,
-  ));
+  return AsyncValue.data(
+    DashboardState(
+      monthSummary: monthSummary,
+      categorySummaries: catSummaries,
+      top5Expenses: top5,
+      recentExpenses: expenses.take(10).toList(),
+      daysUnderSafeDailySpendCount: streak,
+    ),
+  );
 });
 
 // ----------------------------------------------------------------------------
 // BALANCES & HISAB PROVIDER
 // ----------------------------------------------------------------------------
 
-final overallBalancesProvider = Provider<AsyncValue<OverallBalancesResult>>((ref) {
+final overallBalancesProvider = Provider<AsyncValue<OverallBalancesResult>>((
+  ref,
+) {
   final personsAsync = ref.watch(activePersonsStreamProvider);
   final splitExpensesAsync = ref.watch(splitExpensesStreamProvider);
   final splitSharesAsync = ref.watch(splitSharesStreamProvider);
   final settlementsAsync = ref.watch(settlementsStreamProvider);
 
-  if (personsAsync.isLoading || splitExpensesAsync.isLoading || splitSharesAsync.isLoading || settlementsAsync.isLoading) {
+  if (personsAsync.isLoading ||
+      splitExpensesAsync.isLoading ||
+      splitSharesAsync.isLoading ||
+      settlementsAsync.isLoading) {
     return const AsyncValue.loading();
   }
 
@@ -235,9 +316,7 @@ final overallBalancesProvider = Provider<AsyncValue<OverallBalancesResult>>((ref
   final splitShares = splitSharesAsync.value ?? [];
   final settlements = settlementsAsync.value ?? [];
 
-  final Map<int, String> peopleMap = {
-    for (final p in persons) p.id: p.name,
-  };
+  final Map<int, String> peopleMap = {for (final p in persons) p.id: p.name};
 
   final Map<String, SplitExpense> expenseMap = {
     for (final exp in splitExpenses) exp.id: exp,
@@ -247,19 +326,25 @@ final overallBalancesProvider = Provider<AsyncValue<OverallBalancesResult>>((ref
   for (final share in splitShares) {
     final parentExp = expenseMap[share.splitExpenseId];
     if (parentExp != null) {
-      splitItems.add(RawSplitItem(
-        paidByPersonId: parentExp.paidByPersonId,
-        sharePersonId: share.personId,
-        shareAmountPaise: share.shareAmountPaise,
-      ));
+      splitItems.add(
+        RawSplitItem(
+          paidByPersonId: parentExp.paidByPersonId,
+          sharePersonId: share.personId,
+          shareAmountPaise: share.shareAmountPaise,
+        ),
+      );
     }
   }
 
-  final List<RawSettlementItem> settlementItems = settlements.map((s) => RawSettlementItem(
-        fromPersonId: s.fromPersonId,
-        toPersonId: s.toPersonId,
-        amountPaise: s.amountPaise,
-      )).toList();
+  final List<RawSettlementItem> settlementItems = settlements
+      .map(
+        (s) => RawSettlementItem(
+          fromPersonId: s.fromPersonId,
+          toPersonId: s.toPersonId,
+          amountPaise: s.amountPaise,
+        ),
+      )
+      .toList();
 
   final result = BalanceCalculator.compute(
     people: peopleMap,
@@ -271,32 +356,34 @@ final overallBalancesProvider = Provider<AsyncValue<OverallBalancesResult>>((ref
 });
 
 // Debt Simplification Provider
-final debtSimplificationProvider = Provider<AsyncValue<List<SimplifiedPayment>>>((ref) {
-  final balancesAsync = ref.watch(overallBalancesProvider);
-  final personsAsync = ref.watch(activePersonsStreamProvider);
+final debtSimplificationProvider =
+    Provider<AsyncValue<List<SimplifiedPayment>>>((ref) {
+      final balancesAsync = ref.watch(overallBalancesProvider);
+      final personsAsync = ref.watch(activePersonsStreamProvider);
 
-  if (balancesAsync.isLoading || personsAsync.isLoading) {
-    return const AsyncValue.loading();
-  }
+      if (balancesAsync.isLoading || personsAsync.isLoading) {
+        return const AsyncValue.loading();
+      }
 
-  final balances = balancesAsync.value;
-  final persons = personsAsync.value ?? [];
-  if (balances == null) return const AsyncValue.data([]);
+      final balances = balancesAsync.value;
+      final persons = personsAsync.value ?? [];
+      if (balances == null) return const AsyncValue.data([]);
 
-  final Map<int?, String> participants = {
-    null: 'Me',
-    for (final p in persons) p.id: p.name,
-  };
+      final Map<int?, String> participants = {
+        null: 'Me',
+        for (final p in persons) p.id: p.name,
+      };
 
-  final Map<int?, int> netBalances = {
-    null: balances.netPositionPaise, // My net position
-    for (final pb in balances.personBalances) pb.personId: pb.netBalancePaise,
-  };
+      final Map<int?, int> netBalances = {
+        null: balances.netPositionPaise, // My net position
+        for (final pb in balances.personBalances)
+          pb.personId: pb.netBalancePaise,
+      };
 
-  final payments = DebtSimplifier.simplify(
-    participants: participants,
-    netBalancesPaise: netBalances,
-  );
+      final payments = DebtSimplifier.simplify(
+        participants: participants,
+        netBalancesPaise: netBalances,
+      );
 
-  return AsyncValue.data(payments);
-});
+      return AsyncValue.data(payments);
+    });

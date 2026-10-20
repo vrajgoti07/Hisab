@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/app_constants.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../data/database/app_database.dart';
 import '../../../data/providers/app_providers.dart';
@@ -50,15 +51,23 @@ class _BudgetSetupScreenState extends ConsumerState<BudgetSetupScreen> {
               TextField(
                 controller: limitController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Monthly Limit (₹)', prefixText: '₹ '),
+                decoration: const InputDecoration(
+                  labelText: 'Monthly Limit (₹)',
+                  prefixText: '₹ ',
+                ),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
             ElevatedButton(
               onPressed: () async {
-                final newLimit = CurrencyFormatter.parseToPaise(limitController.text);
+                final newLimit = CurrencyFormatter.parseToPaise(
+                  limitController.text,
+                );
                 if (newLimit != null && newLimit > 0) {
                   final repo = ref.read(repositoryProvider);
                   await repo.updateCategory(
@@ -83,6 +92,7 @@ class _BudgetSetupScreenState extends ConsumerState<BudgetSetupScreen> {
     final activeMY = ref.watch(activeMonthYearProvider);
     final budgetAsync = ref.watch(activeMonthlyBudgetStreamProvider);
     final categoriesAsync = ref.watch(activeCategoriesStreamProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final budget = budgetAsync.value;
     final categories = categoriesAsync.value ?? [];
@@ -94,50 +104,78 @@ class _BudgetSetupScreenState extends ConsumerState<BudgetSetupScreen> {
       _budgetController.text = '25000';
     }
 
-    final totalLimitsPaise = categories.fold<int>(0, (sum, c) => sum + c.monthlyLimitPaise);
+    final totalLimitsPaise = categories.fold<int>(
+      0,
+      (sum, c) => sum + c.monthlyLimitPaise,
+    );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
-      appBar: AppBar(
-        title: const Text('Budget & Category Setup'),
-        backgroundColor: const Color(0xFFF6F7FB),
-      ),
+      appBar: AppBar(title: const Text('Budget & Category Setup')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Month Selector Header
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppColors.cardDark : Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(
+                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'POCKET MONEY / SALARY FOR ${activeMY.displayName.toUpperCase()}',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.neutralSlate,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Text('₹', style: TextStyle(fontFamily: 'Poppins', fontSize: 32, fontWeight: FontWeight.w700, color: Color(0xFF1A365D))),
+                      const Text(
+                        '₹',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.emerald,
+                        ),
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: TextField(
                           controller: _budgetController,
                           keyboardType: TextInputType.number,
-                          style: const TextStyle(fontFamily: 'Poppins', fontSize: 30, fontWeight: FontWeight.w700),
-                          decoration: const InputDecoration(border: InputBorder.none, hintText: '25,000'),
+                          style: const TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 30,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            fillColor: Colors.transparent,
+                            filled: false,
+                            contentPadding: EdgeInsets.zero,
+                            hintText: '25,000',
+                          ),
                         ),
                       ),
                       ElevatedButton(
                         onPressed: () async {
-                          final amt = CurrencyFormatter.parseToPaise(_budgetController.text);
+                          final amt = CurrencyFormatter.parseToPaise(
+                            _budgetController.text,
+                          );
                           if (amt != null && amt > 0) {
                             final repo = ref.read(repositoryProvider);
                             await repo.setMonthlyBudget(
@@ -148,23 +186,43 @@ class _BudgetSetupScreenState extends ConsumerState<BudgetSetupScreen> {
                             );
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Monthly budget updated! 💼'), backgroundColor: Color(0xFF0D9488)),
+                                const SnackBar(
+                                  content: Text('Monthly budget updated! 💼'),
+                                  backgroundColor: AppColors.emerald,
+                                ),
                               );
                             }
                           }
                         },
-                        style: ElevatedButton.styleFrom(backgroundColor: AppConstants.primaryBlue),
-                        child: const Text('Save', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.emerald,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 12,
+                          ),
+                        ),
+                        child: const Text('Save'),
                       ),
                     ],
                   ),
-                  const Divider(height: 20),
+                  Divider(
+                    height: 20,
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
+                  ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     value: _carryForward,
                     onChanged: (val) => setState(() => _carryForward = val),
-                    title: const Text('Carry forward unspent balance to next month', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    activeThumbColor: const Color(0xFF0D9488),
+                    title: const Text(
+                      'Carry forward unspent balance to next month',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    activeThumbColor: AppColors.emerald,
                   ),
                 ],
               ),
@@ -175,8 +233,23 @@ class _BudgetSetupScreenState extends ConsumerState<BudgetSetupScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('CATEGORY ALLOCATIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B), letterSpacing: 0.8)),
-                Text('Total: ${CurrencyFormatter.formatPaise(totalLimitsPaise)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF0D9488))),
+                const Text(
+                  'CATEGORY ALLOCATIONS',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.neutralSlate,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                Text(
+                  'Total: ${CurrencyFormatter.formatPaise(totalLimitsPaise)}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.emerald,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 10),
@@ -185,21 +258,35 @@ class _BudgetSetupScreenState extends ConsumerState<BudgetSetupScreen> {
             ...categories.map((cat) {
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
-                ),
                 child: ListTile(
-                  leading: Text(cat.emoji, style: const TextStyle(fontSize: 24)),
-                  title: Text(cat.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text('Monthly Limit: ${CurrencyFormatter.formatPaise(cat.monthlyLimitPaise)}'),
+                  leading: Text(
+                    cat.emoji,
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                  title: Text(
+                    cat.name,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(
+                    'Monthly Limit: ${CurrencyFormatter.formatPaise(cat.monthlyLimitPaise)}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.neutralSlate,
+                    ),
+                  ),
                   trailing: IconButton(
-                    icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF0D9488)),
+                    icon: const Icon(
+                      LucideIcons.pencil,
+                      size: 18,
+                      color: AppColors.emerald,
+                    ),
+                    tooltip: 'Edit category limit',
                     onPressed: () => _showEditCategoryDialog(context, cat),
                   ),
                 ),
               );
             }),
+            const SizedBox(height: 20),
           ],
         ),
       ),

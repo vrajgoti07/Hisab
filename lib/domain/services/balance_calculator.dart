@@ -77,14 +77,16 @@ class BalanceCalculator {
       if (item.paidByPersonId == null && item.sharePersonId != null) {
         final friendId = item.sharePersonId!;
         if (theyOweMeMap.containsKey(friendId)) {
-          theyOweMeMap[friendId] = theyOweMeMap[friendId]! + item.shareAmountPaise;
+          theyOweMeMap[friendId] =
+              theyOweMeMap[friendId]! + item.shareAmountPaise;
         }
       }
       // Case B: A friend paid, and "Me" had a share -> I owe that friend
       else if (item.paidByPersonId != null && item.sharePersonId == null) {
         final payerFriendId = item.paidByPersonId!;
         if (iOweThemMap.containsKey(payerFriendId)) {
-          iOweThemMap[payerFriendId] = iOweThemMap[payerFriendId]! + item.shareAmountPaise;
+          iOweThemMap[payerFriendId] =
+              iOweThemMap[payerFriendId]! + item.shareAmountPaise;
         }
       }
     }
@@ -126,13 +128,15 @@ class BalanceCalculator {
         toPay += (-net);
       }
 
-      results.add(PersonBalanceResult(
-        personId: pId,
-        personName: name,
-        totalTheyOweMePaise: theyOwe,
-        totalIOweThemPaise: iOwe,
-        netBalancePaise: net,
-      ));
+      results.add(
+        PersonBalanceResult(
+          personId: pId,
+          personName: name,
+          totalTheyOweMePaise: theyOwe,
+          totalIOweThemPaise: iOwe,
+          netBalancePaise: net,
+        ),
+      );
     }
 
     return OverallBalancesResult(

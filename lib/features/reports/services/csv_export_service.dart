@@ -17,7 +17,14 @@ class CsvExportService {
     final catMap = {for (final c in categories) c.id: c.name};
 
     final List<List<dynamic>> rows = [
-      ['Date', 'Category', 'Description', 'Amount (INR)', 'Payment Mode', 'Notes']
+      [
+        'Date',
+        'Category',
+        'Description',
+        'Amount (INR)',
+        'Payment Mode',
+        'Notes',
+      ],
     ];
 
     for (final e in expenses) {
@@ -36,6 +43,8 @@ class CsvExportService {
     final monthName = DateFormatter.getMonthName(month);
     final file = File('${dir.path}/PocketPlan_Expenses_${monthName}_$year.csv');
     await file.writeAsString(csvString);
-    await Share.shareXFiles([XFile(file.path)], text: 'PocketPlan Expenses CSV ($monthName $year)');
+    await Share.shareXFiles([
+      XFile(file.path),
+    ], text: 'PocketPlan Expenses CSV ($monthName $year)');
   }
 }

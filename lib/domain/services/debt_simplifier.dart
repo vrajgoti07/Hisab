@@ -36,7 +36,8 @@ class DebtSimplifier {
   /// Guarantees the minimum number of transactions to clear all balances.
   static List<SimplifiedPayment> simplify({
     required Map<int?, String> participants, // id -> name (null id = 'Me')
-    required Map<int?, int> netBalancesPaise, // positive = to receive, negative = owes
+    required Map<int?, int>
+    netBalancesPaise, // positive = to receive, negative = owes
   }) {
     final List<_PartyBalance> debtors = [];
     final List<_PartyBalance> creditors = [];
@@ -66,13 +67,15 @@ class DebtSimplifier {
       final settledAmount = min(maxDebtor.amountPaise, maxCreditor.amountPaise);
 
       if (settledAmount > 0) {
-        payments.add(SimplifiedPayment(
-          fromPersonId: maxDebtor.id,
-          fromName: maxDebtor.name,
-          toPersonId: maxCreditor.id,
-          toName: maxCreditor.name,
-          amountPaise: settledAmount,
-        ));
+        payments.add(
+          SimplifiedPayment(
+            fromPersonId: maxDebtor.id,
+            fromName: maxDebtor.name,
+            toPersonId: maxCreditor.id,
+            toName: maxCreditor.name,
+            amountPaise: settledAmount,
+          ),
+        );
       }
 
       maxDebtor.amountPaise -= settledAmount;

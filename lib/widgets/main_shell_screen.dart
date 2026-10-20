@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../core/constants/app_constants.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../core/theme/app_colors.dart';
 import '../features/dashboard/presentation/dashboard_screen.dart';
 import '../features/expenses/presentation/add_edit_expense_sheet.dart';
 import '../features/expenses/presentation/expenses_screen.dart';
@@ -36,27 +37,34 @@ class _MainShellScreenState extends State<MainShellScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddExpenseModal,
-        backgroundColor: AppConstants.primaryBlue,
-        elevation: 4,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
+        tooltip: 'Add new expense',
+        backgroundColor: AppColors.emerald,
+        foregroundColor: Colors.white,
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: const Icon(LucideIcons.plus, size: 24),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          border: Border(
+            top: BorderSide(
+              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+              width: 1,
+            ),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 16,
-              offset: const Offset(0, -4),
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, -3),
             ),
           ],
         ),
@@ -65,34 +73,56 @@ class _MainShellScreenState extends State<MainShellScreen> {
           onDestinationSelected: (index) {
             setState(() => _currentIndex = index);
           },
-          backgroundColor: Colors.white,
-          indicatorColor: const Color(0xFF0D9488).withValues(alpha: 0.15),
+          backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
+          indicatorColor: AppColors.emerald.withValues(
+            alpha: isDark ? 0.25 : 0.12,
+          ),
           elevation: 0,
           destinations: const [
             NavigationDestination(
-              icon: Icon(Icons.dashboard_outlined),
-              selectedIcon: Icon(Icons.dashboard_rounded, color: Color(0xFF0D9488)),
-              label: 'Home',
+              icon: Icon(LucideIcons.layoutDashboard, size: 20),
+              selectedIcon: Icon(
+                LucideIcons.layoutDashboard,
+                size: 20,
+                color: AppColors.emerald,
+              ),
+              label: 'Dashboard',
             ),
             NavigationDestination(
-              icon: Icon(Icons.receipt_long_outlined),
-              selectedIcon: Icon(Icons.receipt_long_rounded, color: Color(0xFF0D9488)),
+              icon: Icon(LucideIcons.receiptText, size: 20),
+              selectedIcon: Icon(
+                LucideIcons.receiptText,
+                size: 20,
+                color: AppColors.emerald,
+              ),
               label: 'Expenses',
             ),
             NavigationDestination(
-              icon: Icon(Icons.people_alt_outlined),
-              selectedIcon: Icon(Icons.people_alt_rounded, color: Color(0xFF0D9488)),
+              icon: Icon(LucideIcons.users, size: 20),
+              selectedIcon: Icon(
+                LucideIcons.users,
+                size: 20,
+                color: AppColors.emerald,
+              ),
               label: 'Friends',
             ),
             NavigationDestination(
-              icon: Icon(Icons.analytics_outlined),
-              selectedIcon: Icon(Icons.analytics_rounded, color: Color(0xFF0D9488)),
+              icon: Icon(LucideIcons.chartColumnBig, size: 20),
+              selectedIcon: Icon(
+                LucideIcons.chartColumnBig,
+                size: 20,
+                color: AppColors.emerald,
+              ),
               label: 'Reports',
             ),
             NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings_rounded, color: Color(0xFF0D9488)),
-              label: 'More',
+              icon: Icon(LucideIcons.settings, size: 20),
+              selectedIcon: Icon(
+                LucideIcons.settings,
+                size: 20,
+                color: AppColors.emerald,
+              ),
+              label: 'Settings',
             ),
           ],
         ),

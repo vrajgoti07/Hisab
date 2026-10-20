@@ -1,7 +1,9 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:uuid/uuid.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../data/database/app_database.dart';
 import '../../../data/providers/app_providers.dart';
@@ -22,7 +24,8 @@ class AddSplitExpenseScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<AddSplitExpenseScreen> createState() => _AddSplitExpenseScreenState();
+  ConsumerState<AddSplitExpenseScreen> createState() =>
+      _AddSplitExpenseScreenState();
 }
 
 class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
@@ -49,7 +52,9 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
     _titleController = TextEditingController(text: widget.initialTitle ?? '');
     _totalAmountController = TextEditingController(
       text: widget.initialTotalPaise != null
-          ? (widget.initialTotalPaise! / 100.0).toStringAsFixed(widget.initialTotalPaise! % 100 == 0 ? 0 : 2)
+          ? (widget.initialTotalPaise! / 100.0).toStringAsFixed(
+              widget.initialTotalPaise! % 100 == 0 ? 0 : 2,
+            )
           : '',
     );
     _groupController = TextEditingController();
@@ -78,7 +83,8 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
   }
 
   SplitCalculationResult _calculatePreview(List<Person> allPersons) {
-    final totalPaise = CurrencyFormatter.parseToPaise(_totalAmountController.text) ?? 0;
+    final totalPaise =
+        CurrencyFormatter.parseToPaise(_totalAmountController.text) ?? 0;
     if (totalPaise <= 0 || _selectedParticipantIds.isEmpty) {
       return SplitCalculationResult(
         isValid: false,
@@ -108,13 +114,15 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
         shares = int.tryParse(customText);
       }
 
-      participants.add(SplitParticipant(
-        personId: id,
-        name: name,
-        exactAmountPaise: exactPaise,
-        percentage: pct,
-        shareCount: shares,
-      ));
+      participants.add(
+        SplitParticipant(
+          personId: id,
+          name: name,
+          exactAmountPaise: exactPaise,
+          percentage: pct,
+          shareCount: shares,
+        ),
+      );
     }
 
     return SplitCalculator.calculate(
@@ -128,14 +136,20 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a title for this shared bill.')),
+        const SnackBar(
+          content: Text('Please enter a title for this shared bill.'),
+        ),
       );
       return;
     }
 
     if (!calcResult.isValid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(calcResult.errorMessage ?? 'Please check the split amounts.')),
+        SnackBar(
+          content: Text(
+            calcResult.errorMessage ?? 'Please check the split amounts.',
+          ),
+        ),
       );
       return;
     }
@@ -147,12 +161,20 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
       id: splitId,
       date: _selectedDate,
       title: title,
-      groupName: drift.Value(_groupController.text.trim().isEmpty ? null : _groupController.text.trim()),
+      groupName: drift.Value(
+        _groupController.text.trim().isEmpty
+            ? null
+            : _groupController.text.trim(),
+      ),
       totalAmountPaise: calcResult.totalAmountPaise,
       paidByPersonId: drift.Value(_paidByPersonId),
       splitType: _splitType.name,
       categoryId: drift.Value(_categoryId),
-      note: drift.Value(_noteController.text.trim().isEmpty ? null : _noteController.text.trim()),
+      note: drift.Value(
+        _noteController.text.trim().isEmpty
+            ? null
+            : _noteController.text.trim(),
+      ),
     );
 
     final List<SplitSharesCompanion> shares = calcResult.shares.map((s) {
@@ -175,7 +197,7 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Split expense saved and hisab updated! 🎉'),
-          backgroundColor: Color(0xFF0D9488),
+          backgroundColor: AppColors.emerald,
         ),
       );
     }
@@ -185,6 +207,7 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
   Widget build(BuildContext context) {
     final personsAsync = ref.watch(activePersonsStreamProvider);
     final categoriesAsync = ref.watch(activeCategoriesStreamProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final persons = personsAsync.value ?? [];
     final categories = categoriesAsync.value ?? [];
@@ -202,13 +225,9 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
     final calcResult = _calculatePreview(persons);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
-      appBar: AppBar(
-        title: const Text('Split Bill with Friends'),
-        backgroundColor: const Color(0xFFF6F7FB),
-      ),
+      appBar: AppBar(title: const Text('Split Bill with Friends')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -216,38 +235,74 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppColors.cardDark : Colors.white,
                 borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(
+                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('TOTAL BILL AMOUNT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+                  const Text(
+                    'TOTAL BILL AMOUNT',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.neutralSlate,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Text('₹', style: TextStyle(fontFamily: 'Poppins', fontSize: 32, fontWeight: FontWeight.w700, color: Color(0xFF0D9488))),
+                      const Text(
+                        '₹',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.emerald,
+                        ),
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: TextField(
                           controller: _totalAmountController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          style: const TextStyle(fontFamily: 'Poppins', fontSize: 32, fontWeight: FontWeight.w700),
-                          decoration: const InputDecoration(hintText: '0.00', border: InputBorder.none),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          style: const TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: '0.00',
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            fillColor: Colors.transparent,
+                            filled: false,
+                            contentPadding: EdgeInsets.zero,
+                          ),
                           onChanged: (_) => setState(() {}),
                         ),
                       ),
                     ],
                   ),
-                  const Divider(height: 24),
+                  Divider(
+                    height: 24,
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
+                  ),
                   TextField(
                     controller: _titleController,
                     decoration: const InputDecoration(
                       labelText: 'Title / Description',
                       hintText: 'e.g. Dominos Pizza, Goa Airbnb, Cab ride',
-                      border: InputBorder.none,
-                      prefixIcon: Icon(Icons.receipt_long_outlined, color: Color(0xFF0D9488)),
+                      prefixIcon: Icon(LucideIcons.receiptText, size: 18),
                     ),
                   ),
                 ],
@@ -259,26 +314,39 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppColors.cardDark : Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(
+                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('WHO PAID THE BILL?', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+                  const Text(
+                    'WHO PAID THE BILL?',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.neutralSlate,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<int?>(
                     initialValue: _paidByPersonId,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    ),
+                    dropdownColor: isDark ? AppColors.cardDark : Colors.white,
                     items: [
-                      const DropdownMenuItem(value: null, child: Text('Me (I paid the full amount)')),
-                      ...persons.map((p) => DropdownMenuItem(value: p.id, child: Text('${p.name} paid'))),
+                      const DropdownMenuItem(
+                        value: null,
+                        child: Text('Me (I paid the full bill)'),
+                      ),
+                      ...persons.map(
+                        (p) => DropdownMenuItem(
+                          value: p.id,
+                          child: Text('${p.name} paid'),
+                        ),
+                      ),
                     ],
                     onChanged: (val) => setState(() => _paidByPersonId = val),
                   ),
@@ -289,13 +357,9 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
                       Expanded(
                         child: TextField(
                           controller: _groupController,
-                          decoration: InputDecoration(
-                            labelText: 'Group / Tag (Optional)',
+                          decoration: const InputDecoration(
+                            labelText: 'Event / Tag (Optional)',
                             hintText: 'e.g. Goa Trip',
-                            filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           ),
                         ),
                       ),
@@ -303,14 +367,23 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
                       Expanded(
                         child: DropdownButtonFormField<int>(
                           initialValue: _categoryId,
-                          decoration: InputDecoration(
+                          dropdownColor: isDark
+                              ? AppColors.cardDark
+                              : Colors.white,
+                          decoration: const InputDecoration(
                             labelText: 'Category',
-                            filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           ),
-                          items: categories.map((c) => DropdownMenuItem(value: c.id, child: Text('${c.emoji} ${c.name}', overflow: TextOverflow.ellipsis))).toList(),
+                          items: categories
+                              .map(
+                                (c) => DropdownMenuItem(
+                                  value: c.id,
+                                  child: Text(
+                                    '${c.emoji} ${c.name}',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              )
+                              .toList(),
                           onChanged: (val) => setState(() => _categoryId = val),
                         ),
                       ),
@@ -325,22 +398,41 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppColors.cardDark : Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(
+                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('SPLIT TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
-                  const SizedBox(height: 8),
+                  const Text(
+                    'SPLIT METHOD',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.neutralSlate,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
+                    runSpacing: 8,
                     children: [
-                      _buildSplitTypeChip(SplitType.equal, 'Equal (=)'),
-                      _buildSplitTypeChip(SplitType.exact, 'Exact (₹)'),
-                      _buildSplitTypeChip(SplitType.percentage, 'Percentage (%)'),
-                      _buildSplitTypeChip(SplitType.shares, 'Shares (Ratio)'),
+                      _buildSplitTypeChip(SplitType.equal, 'Equal (=)', isDark),
+                      _buildSplitTypeChip(SplitType.exact, 'Exact (₹)', isDark),
+                      _buildSplitTypeChip(
+                        SplitType.percentage,
+                        'Percentage (%)',
+                        isDark,
+                      ),
+                      _buildSplitTypeChip(
+                        SplitType.shares,
+                        'Shares (Ratio)',
+                        isDark,
+                      ),
                     ],
                   ),
                 ],
@@ -352,9 +444,11 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppColors.cardDark : Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(
+                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -362,15 +456,38 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('PARTICIPANTS & SHARES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
-                      Text('${_selectedParticipantIds.length} Selected', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF0D9488))),
+                      const Text(
+                        'PARTICIPANTS & SHARES',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.neutralSlate,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      Text(
+                        '${_selectedParticipantIds.length} Selected',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.emerald,
+                        ),
+                      ),
                     ],
                   ),
-                  const Divider(height: 18),
+                  Divider(
+                    height: 18,
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
+                  ),
                   // Participant Item: Me
-                  _buildParticipantRow(null, 'Me (myself)', calcResult),
+                  _buildParticipantRow(null, 'Me (myself)', calcResult, isDark),
                   // Friends
-                  ...persons.map((p) => _buildParticipantRow(p.id, p.name, calcResult)),
+                  ...persons.map(
+                    (p) =>
+                        _buildParticipantRow(p.id, p.name, calcResult, isDark),
+                  ),
                 ],
               ),
             ),
@@ -380,17 +497,36 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFEEF2F6),
+                color: isDark
+                    ? AppColors.cardDark
+                    : AppColors.teal.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFCBD5E1)),
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.borderDark
+                      : AppColors.teal.withValues(alpha: 0.25),
+                ),
               ),
               child: Column(
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('My Personal Share (Counts in Budget):', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                      Text(CurrencyFormatter.formatPaise(calcResult.mySharePaise), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF0D9488))),
+                      const Text(
+                        'My Personal Share (Counts in Budget):',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Text(
+                        CurrencyFormatter.formatPaise(calcResult.mySharePaise),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: AppColors.emerald,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -398,12 +534,29 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        _paidByPersonId == null ? 'Friends Owe Me (Paid for others):' : 'I Owe Payer:',
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        _paidByPersonId == null
+                            ? 'Friends Owe Me (Paid for others):'
+                            : 'I Owe Payer:',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.neutralSlate,
+                        ),
                       ),
                       Text(
-                        _paidByPersonId == null ? CurrencyFormatter.formatPaise(calcResult.friendsSharePaise) : CurrencyFormatter.formatPaise(calcResult.mySharePaise),
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _paidByPersonId == null ? const Color(0xFF10B981) : const Color(0xFFEF4444)),
+                        _paidByPersonId == null
+                            ? CurrencyFormatter.formatPaise(
+                                calcResult.friendsSharePaise,
+                              )
+                            : CurrencyFormatter.formatPaise(
+                                calcResult.mySharePaise,
+                              ),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: _paidByPersonId == null
+                              ? AppColors.safeGreen
+                              : AppColors.dangerRed,
+                        ),
                       ),
                     ],
                   ),
@@ -416,10 +569,17 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               value: _syncMyShareToExpenses,
-              onChanged: (val) => setState(() => _syncMyShareToExpenses = val ?? true),
-              title: const Text('Add only MY share to personal monthly expenses', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-              subtitle: const Text('Protects your personal budget from friends\' shares', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-              activeColor: const Color(0xFF0D9488),
+              onChanged: (val) =>
+                  setState(() => _syncMyShareToExpenses = val ?? true),
+              title: const Text(
+                'Add only MY share to personal monthly expenses',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              subtitle: const Text(
+                'Protects your personal budget from friends\' shares',
+                style: TextStyle(fontSize: 11, color: AppColors.neutralSlate),
+              ),
+              activeColor: AppColors.emerald,
             ),
             const SizedBox(height: 20),
 
@@ -430,37 +590,68 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
               child: ElevatedButton(
                 onPressed: () => _saveSplitExpense(calcResult),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0D9488),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  backgroundColor: AppColors.emerald,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 0,
                 ),
-                child: const Text('Save Split & Update Hisab 🍕', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+                child: const Text(
+                  'Save Split & Update Hisab',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSplitTypeChip(SplitType type, String label) {
+  Widget _buildSplitTypeChip(SplitType type, String label, bool isDark) {
     final isSelected = _splitType == type;
     return ChoiceChip(
       label: Text(label),
       selected: isSelected,
       onSelected: (_) => setState(() => _splitType = type),
-      selectedColor: const Color(0xFF0D9488),
-      labelStyle: TextStyle(color: isSelected ? Colors.white : const Color(0xFF334155), fontSize: 12, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500),
-      backgroundColor: const Color(0xFFF1F5F9),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      selectedColor: AppColors.emerald,
+      labelStyle: TextStyle(
+        color: isSelected
+            ? Colors.white
+            : (isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textSecondaryLight),
+        fontSize: 12,
+        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+      ),
+      backgroundColor: isDark ? AppColors.surfaceDark : const Color(0xFFF1F5F9),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isSelected
+              ? AppColors.emerald
+              : (isDark ? AppColors.borderDark : AppColors.borderLight),
+        ),
+      ),
     );
   }
 
-  Widget _buildParticipantRow(int? id, String name, SplitCalculationResult calcResult) {
+  Widget _buildParticipantRow(
+    int? id,
+    String name,
+    SplitCalculationResult calcResult,
+    bool isDark,
+  ) {
     final isSelected = _selectedParticipantIds.contains(id);
     final calculatedShare = calcResult.shares.firstWhere(
       (s) => s.personId == id,
-      orElse: () => CalculatedShare(personId: id, name: name, shareAmountPaise: 0),
+      orElse: () =>
+          CalculatedShare(personId: id, name: name, shareAmountPaise: 0),
     );
 
     return Padding(
@@ -469,7 +660,7 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
         children: [
           Checkbox(
             value: isSelected,
-            activeColor: const Color(0xFF0D9488),
+            activeColor: AppColors.emerald,
             onChanged: (val) {
               setState(() {
                 if (val == true) {
@@ -485,20 +676,33 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
           Expanded(
             child: Text(
               name,
-              style: TextStyle(fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal, color: isSelected ? const Color(0xFF0F172A) : Colors.grey),
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected
+                    ? (isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight)
+                    : AppColors.neutralSlate,
+              ),
             ),
           ),
           if (_splitType != SplitType.equal && isSelected) ...[
             SizedBox(
               width: 80,
-              height: 36,
+              height: 38,
               child: TextField(
                 controller: _getCustomController(id),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: InputDecoration(
-                  hintText: _splitType == SplitType.percentage ? '%' : (_splitType == SplitType.shares ? 'ratio' : '₹'),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  hintText: _splitType == SplitType.percentage
+                      ? '%'
+                      : (_splitType == SplitType.shares ? 'ratio' : '₹'),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 8,
+                  ),
                 ),
                 onChanged: (_) => setState(() {}),
               ),
@@ -506,11 +710,15 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
             const SizedBox(width: 8),
           ],
           Text(
-            isSelected ? CurrencyFormatter.formatPaise(calculatedShare.shareAmountPaise) : '₹0',
+            isSelected
+                ? CurrencyFormatter.formatPaise(
+                    calculatedShare.shareAmountPaise,
+                  )
+                : '₹0',
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 13,
-              color: isSelected ? const Color(0xFF0D9488) : Colors.grey,
+              color: isSelected ? AppColors.emerald : AppColors.neutralSlate,
             ),
           ),
         ],

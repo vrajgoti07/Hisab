@@ -8,17 +8,9 @@ void main() {
       // I owe Amit ₹1,000 (-1000 for Me, +1000 for Amit)
       // Net balances: Me: 0, Rahul: -1000, Amit: +1000
       // Debt simplification: Rahul pays Amit ₹1,000 directly! (1 transaction instead of 2)
-      final participants = <int?, String>{
-        null: 'Me',
-        1: 'Rahul',
-        2: 'Amit',
-      };
+      final participants = <int?, String>{null: 'Me', 1: 'Rahul', 2: 'Amit'};
 
-      final netBalances = <int?, int>{
-        null: 0,
-        1: -100000,
-        2: 100000,
-      };
+      final netBalances = <int?, int>{null: 0, 1: -100000, 2: 100000};
 
       final simplified = DebtSimplifier.simplify(
         participants: participants,
@@ -32,14 +24,8 @@ void main() {
     });
 
     test('All settled returns empty list of payments', () {
-      final participants = <int?, String>{
-        null: 'Me',
-        1: 'Rahul',
-      };
-      final netBalances = <int?, int>{
-        null: 0,
-        1: 0,
-      };
+      final participants = <int?, String>{null: 'Me', 1: 'Rahul'};
+      final netBalances = <int?, int>{null: 0, 1: 0};
 
       final simplified = DebtSimplifier.simplify(
         participants: participants,
@@ -70,7 +56,10 @@ void main() {
       );
 
       expect(simplified.length, 2);
-      final totalSettled = simplified.fold<int>(0, (sum, p) => sum + p.amountPaise);
+      final totalSettled = simplified.fold<int>(
+        0,
+        (sum, p) => sum + p.amountPaise,
+      );
       expect(totalSettled, 150000);
       for (final p in simplified) {
         expect(p.toName, 'Me');

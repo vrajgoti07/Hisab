@@ -15,7 +15,9 @@ class PocketPlanRepository {
     // 1. Check if settings exist
     final settingsList = await db.select(db.appSettings).get();
     if (settingsList.isEmpty) {
-      await db.into(db.appSettings).insert(
+      await db
+          .into(db.appSettings)
+          .insert(
             AppSettingsCompanion.insert(
               userName: const Value('Student'),
               currency: const Value('INR'),
@@ -28,7 +30,9 @@ class PocketPlanRepository {
     if (categoriesList.isEmpty) {
       int order = 0;
       for (final cat in AppConstants.defaultCategories) {
-        await db.into(db.categories).insert(
+        await db
+            .into(db.categories)
+            .insert(
               CategoriesCompanion.insert(
                 name: cat.name,
                 emoji: cat.emoji,
@@ -44,9 +48,9 @@ class PocketPlanRepository {
     final modesList = await db.select(db.paymentModes).get();
     if (modesList.isEmpty) {
       for (final mode in AppConstants.defaultPaymentModes) {
-        await db.into(db.paymentModes).insert(
-              PaymentModesCompanion.insert(name: mode),
-            );
+        await db
+            .into(db.paymentModes)
+            .insert(PaymentModesCompanion.insert(name: mode));
       }
     }
   }
@@ -61,7 +65,9 @@ class PocketPlanRepository {
     await initializeDefaultsIfNeeded();
 
     // 2. Seed Monthly Budget of ₹25,000 (2500000 paise)
-    await db.into(db.monthlyBudgets).insertOnConflictUpdate(
+    await db
+        .into(db.monthlyBudgets)
+        .insertOnConflictUpdate(
           MonthlyBudgetsCompanion.insert(
             year: y,
             month: m,
@@ -75,28 +81,36 @@ class PocketPlanRepository {
     final existingPersons = await db.select(db.persons).get();
     int rahulId = 1, priyaId = 2, amitId = 3;
     if (existingPersons.isEmpty) {
-      rahulId = await db.into(db.persons).insert(
+      rahulId = await db
+          .into(db.persons)
+          .insert(
             PersonsCompanion.insert(
               name: 'Rahul Sharma',
               phone: const Value('9876543210'),
               avatarColor: const Value('#3B82F6'),
             ),
           );
-      priyaId = await db.into(db.persons).insert(
+      priyaId = await db
+          .into(db.persons)
+          .insert(
             PersonsCompanion.insert(
               name: 'Priya Patel',
               phone: const Value('9812345678'),
               avatarColor: const Value('#EC4899'),
             ),
           );
-      amitId = await db.into(db.persons).insert(
+      amitId = await db
+          .into(db.persons)
+          .insert(
             PersonsCompanion.insert(
               name: 'Amit Verma',
               phone: const Value('9723456789'),
               avatarColor: const Value('#10B981'),
             ),
           );
-      await db.into(db.persons).insert(
+      await db
+          .into(db.persons)
+          .insert(
             PersonsCompanion.insert(
               name: 'Sneha Joshi',
               phone: const Value('9988776655'),
@@ -111,29 +125,112 @@ class PocketPlanRepository {
 
     // Get Categories
     final categories = await db.select(db.categories).get();
-    final foodCat = categories.firstWhere((c) => c.name.contains('Food'), orElse: () => categories.first);
-    final travelCat = categories.firstWhere((c) => c.name.contains('Travel'), orElse: () => categories.first);
-    final studyCat = categories.firstWhere((c) => c.name.contains('Study'), orElse: () => categories.first);
-    final entCat = categories.firstWhere((c) => c.name.contains('Entertainment'), orElse: () => categories.first);
-    final billsCat = categories.firstWhere((c) => c.name.contains('Mobile'), orElse: () => categories.first);
-    final savingsCat = categories.firstWhere((c) => c.name.contains('Savings'), orElse: () => categories.first);
+    final foodCat = categories.firstWhere(
+      (c) => c.name.contains('Food'),
+      orElse: () => categories.first,
+    );
+    final travelCat = categories.firstWhere(
+      (c) => c.name.contains('Travel'),
+      orElse: () => categories.first,
+    );
+    final studyCat = categories.firstWhere(
+      (c) => c.name.contains('Study'),
+      orElse: () => categories.first,
+    );
+    final entCat = categories.firstWhere(
+      (c) => c.name.contains('Entertainment'),
+      orElse: () => categories.first,
+    );
+    final billsCat = categories.firstWhere(
+      (c) => c.name.contains('Mobile'),
+      orElse: () => categories.first,
+    );
+    final savingsCat = categories.firstWhere(
+      (c) => c.name.contains('Savings'),
+      orElse: () => categories.first,
+    );
 
     // 4. Seed Expenses (10 diverse expenses)
     final demoDate = DateTime(y, m, 5);
     final sampleExpenses = [
-      (demoDate.subtract(const Duration(days: 4)), foodCat.id, 'College Canteen Lunch', 12000, 'UPI / GPay / PhonePe', 'Snacks with classmates'),
-      (demoDate.subtract(const Duration(days: 3)), travelCat.id, 'Metro SmartCard Recharge', 50000, 'UPI / GPay / PhonePe', 'Monthly pass'),
-      (demoDate.subtract(const Duration(days: 2)), studyCat.id, 'Engineering Physics Textbook', 65000, 'Cash', 'Second hand book store'),
-      (demoDate.subtract(const Duration(days: 1)), foodCat.id, 'Grocery & Maggi', 45000, 'UPI / GPay / PhonePe', 'Hostel stock'),
-      (demoDate, billsCat.id, 'Jio 84 Days Recharge', 47900, 'UPI / GPay / PhonePe', 'Mobile plan'),
-      (demoDate.add(const Duration(days: 1)), entCat.id, 'Movie Ticket (Interstellar Rerun)', 35000, 'Debit Card', 'Weekend show'),
-      (demoDate.add(const Duration(days: 2)), foodCat.id, 'Dinner with Roommates (My share)', 38000, 'UPI / GPay / PhonePe', 'Cafe visit'),
-      (demoDate.add(const Duration(days: 3)), travelCat.id, 'Auto Rickshaw to Station', 18000, 'Cash', 'Railway commute'),
-      (demoDate.add(const Duration(days: 4)), savingsCat.id, 'Transferred to RD Savings', 250000, 'Net Banking', 'Monthly goal'),
+      (
+        demoDate.subtract(const Duration(days: 4)),
+        foodCat.id,
+        'College Canteen Lunch',
+        12000,
+        'UPI / GPay / PhonePe',
+        'Snacks with classmates',
+      ),
+      (
+        demoDate.subtract(const Duration(days: 3)),
+        travelCat.id,
+        'Metro SmartCard Recharge',
+        50000,
+        'UPI / GPay / PhonePe',
+        'Monthly pass',
+      ),
+      (
+        demoDate.subtract(const Duration(days: 2)),
+        studyCat.id,
+        'Engineering Physics Textbook',
+        65000,
+        'Cash',
+        'Second hand book store',
+      ),
+      (
+        demoDate.subtract(const Duration(days: 1)),
+        foodCat.id,
+        'Grocery & Maggi',
+        45000,
+        'UPI / GPay / PhonePe',
+        'Hostel stock',
+      ),
+      (
+        demoDate,
+        billsCat.id,
+        'Jio 84 Days Recharge',
+        47900,
+        'UPI / GPay / PhonePe',
+        'Mobile plan',
+      ),
+      (
+        demoDate.add(const Duration(days: 1)),
+        entCat.id,
+        'Movie Ticket (Interstellar Rerun)',
+        35000,
+        'Debit Card',
+        'Weekend show',
+      ),
+      (
+        demoDate.add(const Duration(days: 2)),
+        foodCat.id,
+        'Dinner with Roommates (My share)',
+        38000,
+        'UPI / GPay / PhonePe',
+        'Cafe visit',
+      ),
+      (
+        demoDate.add(const Duration(days: 3)),
+        travelCat.id,
+        'Auto Rickshaw to Station',
+        18000,
+        'Cash',
+        'Railway commute',
+      ),
+      (
+        demoDate.add(const Duration(days: 4)),
+        savingsCat.id,
+        'Transferred to RD Savings',
+        250000,
+        'Net Banking',
+        'Monthly goal',
+      ),
     ];
 
     for (final exp in sampleExpenses) {
-      await db.into(db.expenses).insert(
+      await db
+          .into(db.expenses)
+          .insert(
             ExpensesCompanion.insert(
               date: exp.$1,
               categoryId: exp.$2,
@@ -148,7 +245,9 @@ class PocketPlanRepository {
     // 5. Seed 2 Split Expenses
     // Split 1: Dominos Pizza ₹1,200 equal among Me, Rahul, Priya, Amit (₹300 each)
     const split1Id = 'SPL-DEMO-001';
-    await db.into(db.splitExpenses).insertOnConflictUpdate(
+    await db
+        .into(db.splitExpenses)
+        .insertOnConflictUpdate(
           SplitExpensesCompanion.insert(
             id: split1Id,
             date: DateTime(y, m, 4),
@@ -162,14 +261,48 @@ class PocketPlanRepository {
           ),
         );
 
-    await db.into(db.splitShares).insert(SplitSharesCompanion.insert(splitExpenseId: split1Id, personId: const Value(null), shareAmountPaise: 30000));
-    await db.into(db.splitShares).insert(SplitSharesCompanion.insert(splitExpenseId: split1Id, personId: Value(rahulId), shareAmountPaise: 30000));
-    await db.into(db.splitShares).insert(SplitSharesCompanion.insert(splitExpenseId: split1Id, personId: Value(priyaId), shareAmountPaise: 30000));
-    await db.into(db.splitShares).insert(SplitSharesCompanion.insert(splitExpenseId: split1Id, personId: Value(amitId), shareAmountPaise: 30000));
+    await db
+        .into(db.splitShares)
+        .insert(
+          SplitSharesCompanion.insert(
+            splitExpenseId: split1Id,
+            personId: const Value(null),
+            shareAmountPaise: 30000,
+          ),
+        );
+    await db
+        .into(db.splitShares)
+        .insert(
+          SplitSharesCompanion.insert(
+            splitExpenseId: split1Id,
+            personId: Value(rahulId),
+            shareAmountPaise: 30000,
+          ),
+        );
+    await db
+        .into(db.splitShares)
+        .insert(
+          SplitSharesCompanion.insert(
+            splitExpenseId: split1Id,
+            personId: Value(priyaId),
+            shareAmountPaise: 30000,
+          ),
+        );
+    await db
+        .into(db.splitShares)
+        .insert(
+          SplitSharesCompanion.insert(
+            splitExpenseId: split1Id,
+            personId: Value(amitId),
+            shareAmountPaise: 30000,
+          ),
+        );
 
     // Split 2: Rahul paid for Resort booking ₹6,000. My share is ₹2,000 (I owe Rahul ₹2,000)
     const split2Id = 'SPL-DEMO-002';
-    await db.into(db.splitExpenses).insertOnConflictUpdate(
+    await db
+        .into(db.splitExpenses)
+        .insertOnConflictUpdate(
           SplitExpensesCompanion.insert(
             id: split2Id,
             date: DateTime(y, m, 8),
@@ -183,12 +316,38 @@ class PocketPlanRepository {
           ),
         );
 
-    await db.into(db.splitShares).insert(SplitSharesCompanion.insert(splitExpenseId: split2Id, personId: const Value(null), shareAmountPaise: 200000));
-    await db.into(db.splitShares).insert(SplitSharesCompanion.insert(splitExpenseId: split2Id, personId: Value(rahulId), shareAmountPaise: 200000));
-    await db.into(db.splitShares).insert(SplitSharesCompanion.insert(splitExpenseId: split2Id, personId: Value(amitId), shareAmountPaise: 200000));
+    await db
+        .into(db.splitShares)
+        .insert(
+          SplitSharesCompanion.insert(
+            splitExpenseId: split2Id,
+            personId: const Value(null),
+            shareAmountPaise: 200000,
+          ),
+        );
+    await db
+        .into(db.splitShares)
+        .insert(
+          SplitSharesCompanion.insert(
+            splitExpenseId: split2Id,
+            personId: Value(rahulId),
+            shareAmountPaise: 200000,
+          ),
+        );
+    await db
+        .into(db.splitShares)
+        .insert(
+          SplitSharesCompanion.insert(
+            splitExpenseId: split2Id,
+            personId: Value(amitId),
+            shareAmountPaise: 200000,
+          ),
+        );
 
     // 6. Seed 1 Partial Settlement: Rahul repaid ₹300 for pizza
-    await db.into(db.settlements).insert(
+    await db
+        .into(db.settlements)
+        .insert(
           SettlementsCompanion.insert(
             date: DateTime(y, m, 7),
             fromPersonId: Value(rahulId),
@@ -202,7 +361,9 @@ class PocketPlanRepository {
     // 7. Seed Savings Goals
     final existingGoals = await db.select(db.savingsGoals).get();
     if (existingGoals.isEmpty) {
-      await db.into(db.savingsGoals).insert(
+      await db
+          .into(db.savingsGoals)
+          .insert(
             SavingsGoalsCompanion.insert(
               name: 'Laptop Upgrade',
               targetPaise: 6000000, // ₹60,000
@@ -211,7 +372,9 @@ class PocketPlanRepository {
               deadline: Value(DateTime(y, 12, 31)),
             ),
           );
-      await db.into(db.savingsGoals).insert(
+      await db
+          .into(db.savingsGoals)
+          .insert(
             SavingsGoalsCompanion.insert(
               name: 'Emergency Fund',
               targetPaise: 2500000, // ₹25,000
@@ -256,7 +419,9 @@ class PocketPlanRepository {
     bool carryForward = true,
     int carriedAmountPaise = 0,
   }) async {
-    await db.into(db.monthlyBudgets).insertOnConflictUpdate(
+    await db
+        .into(db.monthlyBudgets)
+        .insertOnConflictUpdate(
           MonthlyBudgetsCompanion.insert(
             year: year,
             month: month,
@@ -280,19 +445,35 @@ class PocketPlanRepository {
 
   Stream<List<Expense>> watchExpensesForMonth(int year, int month) {
     final start = DateTime(year, month, 1);
-    final end = month == 12 ? DateTime(year + 1, 1, 1) : DateTime(year, month + 1, 1);
+    final end = month == 12
+        ? DateTime(year + 1, 1, 1)
+        : DateTime(year, month + 1, 1);
     final query = db.select(db.expenses)
-      ..where((e) => e.date.isBiggerOrEqualValue(start) & e.date.isSmallerThanValue(end))
-      ..orderBy([(e) => OrderingTerm.desc(e.date), (e) => OrderingTerm.desc(e.id)]);
+      ..where(
+        (e) =>
+            e.date.isBiggerOrEqualValue(start) & e.date.isSmallerThanValue(end),
+      )
+      ..orderBy([
+        (e) => OrderingTerm.desc(e.date),
+        (e) => OrderingTerm.desc(e.id),
+      ]);
     return query.watch();
   }
 
   Future<List<Expense>> getExpensesForMonth(int year, int month) async {
     final start = DateTime(year, month, 1);
-    final end = month == 12 ? DateTime(year + 1, 1, 1) : DateTime(year, month + 1, 1);
+    final end = month == 12
+        ? DateTime(year + 1, 1, 1)
+        : DateTime(year, month + 1, 1);
     final query = db.select(db.expenses)
-      ..where((e) => e.date.isBiggerOrEqualValue(start) & e.date.isSmallerThanValue(end))
-      ..orderBy([(e) => OrderingTerm.desc(e.date), (e) => OrderingTerm.desc(e.id)]);
+      ..where(
+        (e) =>
+            e.date.isBiggerOrEqualValue(start) & e.date.isSmallerThanValue(end),
+      )
+      ..orderBy([
+        (e) => OrderingTerm.desc(e.date),
+        (e) => OrderingTerm.desc(e.id),
+      ]);
     return query.get();
   }
 
@@ -326,14 +507,20 @@ class PocketPlanRepository {
   Stream<List<Category>> watchActiveCategories() {
     final query = db.select(db.categories)
       ..where((c) => c.isActive.equals(true))
-      ..orderBy([(c) => OrderingTerm.asc(c.sortOrder), (c) => OrderingTerm.asc(c.id)]);
+      ..orderBy([
+        (c) => OrderingTerm.asc(c.sortOrder),
+        (c) => OrderingTerm.asc(c.id),
+      ]);
     return query.watch();
   }
 
   Future<List<Category>> getActiveCategories() async {
     final query = db.select(db.categories)
       ..where((c) => c.isActive.equals(true))
-      ..orderBy([(c) => OrderingTerm.asc(c.sortOrder), (c) => OrderingTerm.asc(c.id)]);
+      ..orderBy([
+        (c) => OrderingTerm.asc(c.sortOrder),
+        (c) => OrderingTerm.asc(c.id),
+      ]);
     return query.get();
   }
 
@@ -418,11 +605,17 @@ class PocketPlanRepository {
           orElse: () => const SplitSharesCompanion(),
         );
 
-        if (myShare.shareAmountPaise.present && myShare.shareAmountPaise.value > 0) {
-          await db.into(db.expenses).insert(
+        if (myShare.shareAmountPaise.present &&
+            myShare.shareAmountPaise.value > 0) {
+          await db
+              .into(db.expenses)
+              .insert(
                 ExpensesCompanion.insert(
                   date: expense.date.value,
-                  categoryId: personalExpenseCategoryId ?? expense.categoryId.value ?? 1,
+                  categoryId:
+                      personalExpenseCategoryId ??
+                      expense.categoryId.value ??
+                      1,
                   whereSpent: '${expense.title.value} (My Share)',
                   amountPaise: myShare.shareAmountPaise.value,
                   paymentMode: 'UPI / GPay / PhonePe',
@@ -478,6 +671,8 @@ class PocketPlanRepository {
   }
 
   Future<void> updateAppSettings(AppSettingsCompanion settings) async {
-    await (db.update(db.appSettings)..where((s) => s.id.equals(1))).write(settings);
+    await (db.update(
+      db.appSettings,
+    )..where((s) => s.id.equals(1))).write(settings);
   }
 }

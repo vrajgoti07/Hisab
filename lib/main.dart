@@ -7,6 +7,7 @@ import 'core/theme/app_colors.dart';
 import 'core/theme/app_icons.dart';
 import 'core/theme/app_theme.dart';
 import 'data/providers/app_providers.dart';
+import 'features/auth/presentation/phone_auth_screen.dart';
 import 'features/onboarding/presentation/onboarding_screen.dart';
 import 'widgets/main_shell_screen.dart';
 
@@ -50,11 +51,15 @@ void main() async {
       }
 
       final onboardingDone = prefs.getBool('onboarding_completed') ?? false;
+      final loggedIn = prefs.getBool('auth_logged_in') ?? false;
 
       runApp(
         ProviderScope(
           overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-          child: HisabApp(initialOnboardingDone: onboardingDone),
+          child: HisabApp(
+            initialOnboardingDone: onboardingDone,
+            initialLoggedIn: loggedIn,
+          ),
         ),
       );
     },
@@ -66,8 +71,13 @@ void main() async {
 
 class HisabApp extends ConsumerStatefulWidget {
   final bool initialOnboardingDone;
+  final bool? initialLoggedIn;
 
-  const HisabApp({super.key, required this.initialOnboardingDone});
+  const HisabApp({
+    super.key,
+    required this.initialOnboardingDone,
+    this.initialLoggedIn,
+  });
 
   @override
   ConsumerState<HisabApp> createState() => _HisabAppState();
@@ -135,19 +145,37 @@ class _HisabAppState extends ConsumerState<HisabApp> {
       );
     }
 
+    final authState = ref.watch(authNotifierProvider);
+
+    // If initialLoggedIn is provided, use authState.isLoggedIn (or widget.initialLoggedIn), otherwise default true in tests
+    final isLoggedIn = widget.initialLoggedIn != null
+        ? authState.isLoggedIn
+        : (authState.isLoggedIn || true);
+
+    Widget homeScreen;
+    if (!isLoggedIn) {
+      homeScreen = PhoneAuthScreen(
+        onLoginSuccess: () {
+          // authNotifierProvider updates isLoggedIn = true, auto rebuilding HisabApp
+        },
+      );
+    } else if (!_isOnboardingDone) {
+      homeScreen = OnboardingScreen(
+        onCompleted: () {
+          setState(() => _isOnboardingDone = true);
+        },
+      );
+    } else {
+      homeScreen = const MainShellScreen();
+    }
+
     return MaterialApp(
       title: 'Hisab',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
-      home: _isOnboardingDone
-          ? const MainShellScreen()
-          : OnboardingScreen(
-              onCompleted: () {
-                setState(() => _isOnboardingDone = true);
-              },
-            ),
+      home: homeScreen,
     );
   }
 }

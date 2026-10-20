@@ -8,6 +8,7 @@ import '../../domain/services/budget_status_calculator.dart';
 import '../../domain/services/debt_simplifier.dart';
 import '../database/app_database.dart';
 import '../repositories/pocketplan_repository.dart';
+import '../../features/auth/models/auth_state.dart';
 
 // SharedPreferences Provider (can be overridden in ProviderScope)
 final sharedPreferencesProvider = Provider<SharedPreferences?>((ref) => null);
@@ -67,7 +68,131 @@ final repositoryProvider = Provider<PocketPlanRepository>((ref) {
   return PocketPlanRepository(db);
 });
 
+// Authentication State Notifier (Phone Number + OTP + Personal Account Email)
+class AuthNotifier extends StateNotifier<AuthState> {
+  final SharedPreferences? _prefs;
+  final PocketPlanRepository _repo;
+
+  AuthNotifier(this._prefs, this._repo) : super(const AuthState()) {
+    _loadInitialState();
+  }
+
+  void _loadInitialState() {
+    final isLoggedIn = _prefs?.getBool('auth_logged_in') ?? false;
+    final phone = _prefs?.getString('auth_phone_number');
+    final email = _prefs?.getString('auth_user_email');
+    final name = _prefs?.getString('auth_user_name') ?? 'Student';
+
+    state = state.copyWith(
+      isLoggedIn: isLoggedIn,
+      phoneNumber: phone,
+      email: email,
+      userName: name,
+    );
+  }
+
+  Future<void> sendOtp(String phone) async {
+    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    // Realistic delay
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    state = state.copyWith(
+      isLoading: false,
+      isOtpSent: true,
+      phoneNumber: cleanPhone,
+      activeOtp: '123456',
+    );
+  }
+
+  void resetOtpStep() {
+    state = state.copyWith(
+      isOtpSent: false,
+      activeOtp: null,
+      errorMessage: null,
+    );
+  }
+
+  Future<bool> verifyOtp(String code, {String? defaultName}) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    await Future.delayed(const Duration(milliseconds: 400));
+
+    final trimmed = code.trim();
+    if (trimmed == state.activeOtp || trimmed == '123456') {
+      final finalName = (defaultName != null && defaultName.trim().isNotEmpty)
+          ? defaultName.trim()
+          : (state.userName ?? 'Student');
+
+      await _prefs?.setBool('auth_logged_in', true);
+      if (state.phoneNumber != null) {
+        await _prefs?.setString('auth_phone_number', state.phoneNumber!);
+      }
+      await _prefs?.setString('auth_user_name', finalName);
+
+      try {
+        await _repo.updateAppSettings(
+          AppSettingsCompanion(userName: drift.Value(finalName)),
+        );
+      } catch (_) {}
+
+      state = state.copyWith(
+        isLoading: false,
+        isLoggedIn: true,
+        isOtpSent: false,
+        userName: finalName,
+        errorMessage: null,
+      );
+      return true;
+    } else {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Invalid OTP. Please enter 123456 to verify.',
+      );
+      return false;
+    }
+  }
+
+  Future<void> updatePersonalAccount({
+    required String name,
+    required String email,
+  }) async {
+    final trimmedName = name.trim();
+    final trimmedEmail = email.trim();
+
+    await _prefs?.setString('auth_user_name', trimmedName);
+    await _prefs?.setString('auth_user_email', trimmedEmail);
+
+    try {
+      await _repo.updateAppSettings(
+        AppSettingsCompanion(userName: drift.Value(trimmedName)),
+      );
+    } catch (_) {}
+
+    state = state.copyWith(userName: trimmedName, email: trimmedEmail);
+  }
+
+  Future<void> logout() async {
+    await _prefs?.setBool('auth_logged_in', false);
+    state = state.copyWith(
+      isLoggedIn: false,
+      isOtpSent: false,
+      activeOtp: null,
+      errorMessage: null,
+    );
+  }
+}
+
+final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
+  ref,
+) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  final repo = ref.watch(repositoryProvider);
+  return AuthNotifier(prefs, repo);
+});
+
 // Active Month & Year Selection Provider
+
 class ActiveMonthYear {
   final int year;
   final int month;

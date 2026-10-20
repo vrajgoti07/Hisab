@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketplan/data/database/app_database.dart';
 import 'package:pocketplan/data/providers/app_providers.dart';
 import 'package:pocketplan/data/repositories/pocketplan_repository.dart';
+import 'package:pocketplan/features/auth/presentation/phone_auth_screen.dart';
 import 'package:pocketplan/features/expenses/presentation/add_edit_expense_sheet.dart';
 import 'package:pocketplan/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:pocketplan/main.dart';
@@ -12,6 +13,35 @@ import 'package:pocketplan/widgets/app_animated_ring.dart';
 import 'package:pocketplan/widgets/main_shell_screen.dart';
 
 void main() {
+  testWidgets('App opens PhoneAuthScreen when initialLoggedIn is false', (
+    WidgetTester tester,
+  ) async {
+    final inMemoryDb = AppDatabase(NativeDatabase.memory());
+    final testRepo = PocketPlanRepository(inMemoryDb);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(inMemoryDb),
+          repositoryProvider.overrideWithValue(testRepo),
+        ],
+        child: const HisabApp(
+          initialOnboardingDone: true,
+          initialLoggedIn: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
+    expect(find.byType(PhoneAuthScreen), findsOneWidget);
+    expect(find.text('Sign In / Register'), findsOneWidget);
+    expect(find.text('Get OTP Code'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(milliseconds: 50));
+    await inMemoryDb.close();
+  });
+
   testWidgets(
     'App opens OnboardingScreen when initialOnboardingDone is false',
     (WidgetTester tester) async {

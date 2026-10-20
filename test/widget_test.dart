@@ -5,7 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketplan/data/database/app_database.dart';
 import 'package:pocketplan/data/providers/app_providers.dart';
 import 'package:pocketplan/data/repositories/pocketplan_repository.dart';
-import 'package:pocketplan/features/auth/presentation/phone_auth_screen.dart';
+import 'package:pocketplan/features/auth/presentation/login_screen.dart';
+import 'package:pocketplan/features/auth/providers/auth_providers.dart';
+import 'package:pocketplan/features/auth/services/fake_auth_service.dart';
 import 'package:pocketplan/features/expenses/presentation/add_edit_expense_sheet.dart';
 import 'package:pocketplan/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:pocketplan/main.dart';
@@ -13,17 +15,19 @@ import 'package:pocketplan/widgets/app_animated_ring.dart';
 import 'package:pocketplan/widgets/main_shell_screen.dart';
 
 void main() {
-  testWidgets('App opens PhoneAuthScreen when initialLoggedIn is false', (
+  testWidgets('App opens LoginScreen when initialLoggedIn is false', (
     WidgetTester tester,
   ) async {
     final inMemoryDb = AppDatabase(NativeDatabase.memory());
     final testRepo = PocketPlanRepository(inMemoryDb);
+    final fakeAuth = FakeAuthService();
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           databaseProvider.overrideWithValue(inMemoryDb),
           repositoryProvider.overrideWithValue(testRepo),
+          authServiceProvider.overrideWithValue(fakeAuth),
         ],
         child: const HisabApp(
           initialOnboardingDone: true,
@@ -33,9 +37,9 @@ void main() {
     );
 
     await tester.pump();
-    expect(find.byType(PhoneAuthScreen), findsOneWidget);
-    expect(find.text('Sign In / Register'), findsOneWidget);
-    expect(find.text('Get OTP Code'), findsOneWidget);
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.text('Welcome to Hisab'), findsOneWidget);
+    expect(find.text('Sign In to Your Account'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(milliseconds: 50));
@@ -54,7 +58,10 @@ void main() {
             databaseProvider.overrideWithValue(inMemoryDb),
             repositoryProvider.overrideWithValue(testRepo),
           ],
-          child: const HisabApp(initialOnboardingDone: false),
+          child: const HisabApp(
+            initialOnboardingDone: false,
+            initialLoggedIn: true,
+          ),
         ),
       );
 
@@ -82,7 +89,10 @@ void main() {
           databaseProvider.overrideWithValue(inMemoryDb),
           repositoryProvider.overrideWithValue(testRepo),
         ],
-        child: const HisabApp(initialOnboardingDone: true),
+        child: const HisabApp(
+          initialOnboardingDone: true,
+          initialLoggedIn: true,
+        ),
       ),
     );
 
@@ -110,7 +120,10 @@ void main() {
           databaseProvider.overrideWithValue(inMemoryDb),
           repositoryProvider.overrideWithValue(testRepo),
         ],
-        child: const HisabApp(initialOnboardingDone: true),
+        child: const HisabApp(
+          initialOnboardingDone: true,
+          initialLoggedIn: true,
+        ),
       ),
     );
 

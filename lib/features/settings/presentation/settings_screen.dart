@@ -131,16 +131,16 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _confirmLogout(BuildContext context, WidgetRef ref, String? phone) {
+  void _confirmLogout(BuildContext context, WidgetRef ref, String? email) {
     showDialog(
       context: context,
       builder: (_) {
         return AlertDialog(
           title: const Text('Log Out of Hisab?'),
           content: Text(
-            phone != null && phone.isNotEmpty
-                ? 'Are you sure you want to log out from +91 $phone? You will need to verify with an OTP code to sign back in.'
-                : 'Are you sure you want to log out? You will need your phone number to sign back in.',
+            email != null && email.isNotEmpty
+                ? 'Are you sure you want to log out from $email? You will need your password or Google account to sign back in.'
+                : 'Are you sure you want to log out? You will need your credentials to sign back in.',
           ),
           actions: [
             TextButton(
@@ -277,9 +277,11 @@ class SettingsScreen extends ConsumerWidget {
                           Row(
                             children: [
                               Text(
-                                phone != null && phone.isNotEmpty
-                                    ? '+91 $phone'
-                                    : 'Phone not verified',
+                                email != null && email.isNotEmpty
+                                    ? email
+                                    : (phone != null && phone.isNotEmpty
+                                          ? '+91 $phone'
+                                          : 'Authenticated User'),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: isDark
@@ -287,7 +289,8 @@ class SettingsScreen extends ConsumerWidget {
                                       : AppColors.textSecondaryLight,
                                 ),
                               ),
-                              if (phone != null && phone.isNotEmpty) ...[
+                              if (authState.isEmailVerified ||
+                                  authState.isGoogleUser) ...[
                                 const SizedBox(width: 6),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
@@ -655,8 +658,8 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
               subtitle: Text(
-                phone != null && phone.isNotEmpty
-                    ? 'Logged in as +91 $phone'
+                email != null && email.isNotEmpty
+                    ? 'Logged in as $email'
                     : 'Sign out of this session',
                 style: const TextStyle(fontSize: 12),
               ),
@@ -665,7 +668,7 @@ class SettingsScreen extends ConsumerWidget {
                 size: 18,
                 color: AppColors.neutralSlate,
               ),
-              onTap: () => _confirmLogout(context, ref, phone),
+              onTap: () => _confirmLogout(context, ref, email),
             ),
           ),
           const SizedBox(height: 32),

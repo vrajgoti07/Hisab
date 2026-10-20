@@ -1,41 +1,50 @@
+/// Application authentication state representing the active user session.
 class AuthState {
   final bool isLoggedIn;
-  final String? phoneNumber;
+  final String? uid;
   final String? email;
   final String? userName;
-  final bool isOtpSent;
-  final String? activeOtp;
+  final String? photoUrl;
+  final String? phoneNumber;
+  final bool isEmailVerified;
+  final bool isGoogleUser;
   final bool isLoading;
   final String? errorMessage;
 
   const AuthState({
     this.isLoggedIn = false,
-    this.phoneNumber,
+    this.uid,
     this.email,
     this.userName,
-    this.isOtpSent = false,
-    this.activeOtp,
+    this.photoUrl,
+    this.phoneNumber,
+    this.isEmailVerified = false,
+    this.isGoogleUser = false,
     this.isLoading = false,
     this.errorMessage,
   });
 
   AuthState copyWith({
     bool? isLoggedIn,
-    String? phoneNumber,
+    String? uid,
     String? email,
     String? userName,
-    bool? isOtpSent,
-    String? activeOtp,
+    String? photoUrl,
+    String? phoneNumber,
+    bool? isEmailVerified,
+    bool? isGoogleUser,
     bool? isLoading,
     String? errorMessage,
   }) {
     return AuthState(
       isLoggedIn: isLoggedIn ?? this.isLoggedIn,
-      phoneNumber: phoneNumber ?? this.phoneNumber,
+      uid: uid ?? this.uid,
       email: email ?? this.email,
       userName: userName ?? this.userName,
-      isOtpSent: isOtpSent ?? this.isOtpSent,
-      activeOtp: activeOtp ?? this.activeOtp,
+      photoUrl: photoUrl ?? this.photoUrl,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+      isGoogleUser: isGoogleUser ?? this.isGoogleUser,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
     );

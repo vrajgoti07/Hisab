@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 import '../../core/utils/date_formatter.dart';
 import '../../domain/services/balance_calculator.dart';
 import '../../domain/services/budget_status_calculator.dart';
 import '../../domain/services/debt_simplifier.dart';
 import '../database/app_database.dart';
 import '../repositories/pocketplan_repository.dart';
+import '../../features/auth/models/app_user.dart';
 import '../../features/auth/models/auth_state.dart';
+import '../../features/auth/providers/auth_providers.dart';
+import '../../features/auth/services/auth_service.dart';
 
 // SharedPreferences Provider (can be overridden in ProviderScope)
 final sharedPreferencesProvider = Provider<SharedPreferences?>((ref) => null);
@@ -68,89 +72,48 @@ final repositoryProvider = Provider<PocketPlanRepository>((ref) {
   return PocketPlanRepository(db);
 });
 
-// Authentication State Notifier (Phone Number + OTP + Personal Account Email)
+// Authentication State Notifier backed by Firebase Authentication
 class AuthNotifier extends StateNotifier<AuthState> {
-  final SharedPreferences? _prefs;
+  final BaseAuthService _authService;
   final PocketPlanRepository _repo;
+  final SharedPreferences? _prefs;
+  StreamSubscription<AppUser?>? _subscription;
 
-  AuthNotifier(this._prefs, this._repo) : super(const AuthState()) {
-    _loadInitialState();
+  AuthNotifier(this._authService, this._repo, this._prefs)
+    : super(const AuthState()) {
+    _init();
   }
 
-  void _loadInitialState() {
-    final isLoggedIn = _prefs?.getBool('auth_logged_in') ?? false;
-    final phone = _prefs?.getString('auth_phone_number');
-    final email = _prefs?.getString('auth_user_email');
-    final name = _prefs?.getString('auth_user_name') ?? 'Student';
-
-    state = state.copyWith(
-      isLoggedIn: isLoggedIn,
-      phoneNumber: phone,
-      email: email,
-      userName: name,
-    );
-  }
-
-  Future<void> sendOtp(String phone) async {
-    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
-    state = state.copyWith(isLoading: true, errorMessage: null);
-
-    // Realistic delay
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    state = state.copyWith(
-      isLoading: false,
-      isOtpSent: true,
-      phoneNumber: cleanPhone,
-      activeOtp: '123456',
-    );
-  }
-
-  void resetOtpStep() {
-    state = state.copyWith(
-      isOtpSent: false,
-      activeOtp: null,
-      errorMessage: null,
-    );
-  }
-
-  Future<bool> verifyOtp(String code, {String? defaultName}) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    await Future.delayed(const Duration(milliseconds: 400));
-
-    final trimmed = code.trim();
-    if (trimmed == state.activeOtp || trimmed == '123456') {
-      final finalName = (defaultName != null && defaultName.trim().isNotEmpty)
-          ? defaultName.trim()
-          : (state.userName ?? 'Student');
-
-      await _prefs?.setBool('auth_logged_in', true);
-      if (state.phoneNumber != null) {
-        await _prefs?.setString('auth_phone_number', state.phoneNumber!);
-      }
-      await _prefs?.setString('auth_user_name', finalName);
-
-      try {
-        await _repo.updateAppSettings(
-          AppSettingsCompanion(userName: drift.Value(finalName)),
-        );
-      } catch (_) {}
-
-      state = state.copyWith(
-        isLoading: false,
-        isLoggedIn: true,
-        isOtpSent: false,
-        userName: finalName,
-        errorMessage: null,
-      );
-      return true;
-    } else {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: 'Invalid OTP. Please enter 123456 to verify.',
-      );
-      return false;
+  void _init() {
+    final current = _authService.currentUser;
+    if (current != null) {
+      _applyUser(current);
     }
+    _subscription = _authService.authStateChanges.listen((user) {
+      _applyUser(user);
+    });
+  }
+
+  void _applyUser(AppUser? user) {
+    if (user == null) {
+      state = const AuthState(isLoggedIn: false);
+      return;
+    }
+
+    final localName = _prefs?.getString('auth_user_name');
+    final name = (user.displayName != null && user.displayName!.isNotEmpty)
+        ? user.displayName!
+        : (localName ?? 'Student');
+
+    state = AuthState(
+      isLoggedIn: user.canAccessApp,
+      uid: user.uid,
+      email: user.email,
+      userName: name,
+      photoUrl: user.photoUrl,
+      isEmailVerified: user.isEmailVerified,
+      isGoogleUser: user.isGoogleUser,
+    );
   }
 
   Future<void> updatePersonalAccount({
@@ -164,6 +127,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await _prefs?.setString('auth_user_email', trimmedEmail);
 
     try {
+      await _authService.updateDisplayName(trimmedName);
+    } catch (_) {}
+
+    try {
       await _repo.updateAppSettings(
         AppSettingsCompanion(userName: drift.Value(trimmedName)),
       );
@@ -173,22 +140,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
-    await _prefs?.setBool('auth_logged_in', false);
-    state = state.copyWith(
-      isLoggedIn: false,
-      isOtpSent: false,
-      activeOtp: null,
-      errorMessage: null,
-    );
+    await _authService.signOut();
+    state = const AuthState(isLoggedIn: false);
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 }
 
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
   ref,
 ) {
-  final prefs = ref.watch(sharedPreferencesProvider);
+  final authService = ref.watch(authServiceProvider);
   final repo = ref.watch(repositoryProvider);
-  return AuthNotifier(prefs, repo);
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return AuthNotifier(authService, repo, prefs);
 });
 
 // Active Month & Year Selection Provider

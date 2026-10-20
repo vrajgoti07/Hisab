@@ -1,6 +1,5 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:excel/excel.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
@@ -25,11 +24,9 @@ class ExcelExportService {
     // 1. Summary Sheet
     final sheetSummary = excel['Summary'];
     excel.setDefaultSheet('Summary');
+    sheetSummary.appendRow([TextCellValue('HISAB - MONTHLY AUDIT REPORT')]);
     sheetSummary.appendRow([
-      TextCellValue('POCKETPLAN - MONTHLY AUDIT REPORT'),
-    ]);
-    sheetSummary.appendRow([
-      TextCellValue('Student: $studentName | Period: $monthName $year'),
+      TextCellValue('Account: $studentName | Period: $monthName $year'),
     ]);
     sheetSummary.appendRow([TextCellValue('')]);
     sheetSummary.appendRow([
@@ -107,13 +104,18 @@ class ExcelExportService {
       TextCellValue('Status'),
     ]);
     for (final cat in categories) {
+      final status = cat.status == CategoryStatus.ok
+          ? 'OK'
+          : (cat.status == CategoryStatus.nearLimit
+                ? 'Near Limit'
+                : 'Over Limit');
       sheetCategories.appendRow([
         TextCellValue('${cat.emoji} ${cat.categoryName}'),
         DoubleCellValue(CurrencyFormatter.paiseToRupees(cat.limitPaise)),
         DoubleCellValue(CurrencyFormatter.paiseToRupees(cat.spentPaise)),
         DoubleCellValue(CurrencyFormatter.paiseToRupees(cat.remainingPaise)),
         TextCellValue('${(cat.percentageUsed * 100).toStringAsFixed(1)}%'),
-        TextCellValue(cat.status.name.toUpperCase()),
+        TextCellValue(status),
       ]);
     }
 
@@ -143,15 +145,19 @@ class ExcelExportService {
     // Remove default Sheet1
     excel.delete('Sheet1');
 
-    // Save and Share
+    // Save and Share using XFile.fromData (cross-platform, web-safe)
     final fileBytes = excel.save();
     if (fileBytes != null) {
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/PocketPlan_${monthName}_$year.xlsx');
-      await file.writeAsBytes(fileBytes);
+      final fileName = 'Hisab_${monthName}_$year.xlsx';
+      final bytes = Uint8List.fromList(fileBytes);
       await Share.shareXFiles([
-        XFile(file.path),
-      ], text: 'PocketPlan Monthly Excel Report ($monthName $year)');
+        XFile.fromData(
+          bytes,
+          mimeType:
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          name: fileName,
+        ),
+      ], text: 'Hisab Monthly Excel Report ($monthName $year)');
     }
   }
 }

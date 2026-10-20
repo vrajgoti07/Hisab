@@ -1,6 +1,6 @@
-import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:csv/csv.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
@@ -39,12 +39,12 @@ class CsvExportService {
     }
 
     final csvString = const ListToCsvConverter().convert(rows);
-    final dir = await getTemporaryDirectory();
     final monthName = DateFormatter.getMonthName(month);
-    final file = File('${dir.path}/PocketPlan_Expenses_${monthName}_$year.csv');
-    await file.writeAsString(csvString);
+    final fileName = 'Hisab_Expenses_${monthName}_$year.csv';
+    final bytes = Uint8List.fromList(utf8.encode(csvString));
+
     await Share.shareXFiles([
-      XFile(file.path),
-    ], text: 'PocketPlan Expenses CSV ($monthName $year)');
+      XFile.fromData(bytes, mimeType: 'text/csv', name: fileName),
+    ], text: 'Hisab Expenses CSV ($monthName $year)');
   }
 }

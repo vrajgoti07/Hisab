@@ -6,7 +6,6 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../data/database/app_database.dart';
 import '../../../data/providers/app_providers.dart';
-import '../services/csv_export_service.dart';
 import '../services/excel_export_service.dart';
 import '../services/pdf_export_service.dart';
 
@@ -39,14 +38,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final dashStateAsync = ref.watch(dashboardStateProvider);
     final overallBalancesAsync = ref.watch(overallBalancesProvider);
     final expensesAsync = ref.watch(activeMonthlyExpensesStreamProvider);
-    final categoriesAsync = ref.watch(activeCategoriesStreamProvider);
     final appSettingsAsync = ref.watch(appSettingsStreamProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final dashState = dashStateAsync.value;
     final balances = overallBalancesAsync.value;
     final expenses = expensesAsync.value ?? [];
-    final categories = categoriesAsync.value ?? [];
     final studentName = appSettingsAsync.value?.userName ?? 'Student';
 
     return Scaffold(
@@ -229,34 +226,34 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 ),
                 const SizedBox(height: 10),
 
-                // PDF Button (Hero)
+                // 1. Primary Hero: Hisab Statement PDF (The Best Format)
                 SizedBox(
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton.icon(
                     onPressed: () {
                       if (dashState != null && balances != null) {
-                        PdfExportService.printOrShareMonthlyReport(
-                          studentName: studentName,
-                          year: activeMY.year,
-                          month: activeMY.month,
-                          summary: dashState.monthSummary,
-                          categories: dashState.categorySummaries,
-                          expenses: expenses,
-                          friendsBalances: balances,
+                        _exportHisabStatementPdf(
+                          context,
+                          studentName,
+                          activeMY,
+                          dashState,
+                          balances,
+                          expenses,
                         );
                       }
                     },
                     icon: const Icon(
-                      LucideIcons.fileText,
+                      LucideIcons.receiptText,
                       size: 20,
                       color: Colors.white,
                     ),
                     label: const Text(
-                      'Export Official PDF (A4 Parent Report)',
+                      'Export Hisab Statement (PDF)',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
+                        fontSize: 14,
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
@@ -271,33 +268,32 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
                 Row(
                   children: [
-                    // Excel (.xlsx)
+                    // Parent Audit Report (PDF)
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
                           if (dashState != null && balances != null) {
-                            ExcelExportService.exportMonthlyExcel(
-                              studentName: studentName,
-                              year: activeMY.year,
-                              month: activeMY.month,
-                              summary: dashState.monthSummary,
-                              categories: dashState.categorySummaries,
-                              expenses: expenses,
-                              friendsBalances: balances,
+                            _exportParentAuditPdf(
+                              context,
+                              studentName,
+                              activeMY,
+                              dashState,
+                              balances,
+                              expenses,
                             );
                           }
                         },
                         icon: const Icon(
-                          LucideIcons.fileSpreadsheet,
+                          LucideIcons.fileCheck2,
                           size: 18,
-                          color: AppColors.safeGreen,
+                          color: AppColors.teal,
                         ),
                         label: const Text(
-                          'Excel (.xlsx)',
+                          'Parent Report (PDF)',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            color: AppColors.safeGreen,
-                            fontSize: 13,
+                            color: AppColors.teal,
+                            fontSize: 12,
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
@@ -310,28 +306,32 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                     ),
                     const SizedBox(width: 10),
 
-                    // CSV
+                    // Print / Direct Preview (PDF)
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          CsvExportService.exportExpensesCsv(
-                            year: activeMY.year,
-                            month: activeMY.month,
-                            expenses: expenses,
-                            categories: categories,
-                          );
+                          if (dashState != null && balances != null) {
+                            _shareHisabPdf(
+                              context,
+                              studentName,
+                              activeMY,
+                              dashState,
+                              balances,
+                              expenses,
+                            );
+                          }
                         },
                         icon: const Icon(
-                          LucideIcons.fileCode,
+                          LucideIcons.share2,
                           size: 18,
-                          color: AppColors.teal,
+                          color: AppColors.safeGreen,
                         ),
                         label: const Text(
-                          'CSV Export',
+                          'Share / Save (PDF)',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            color: AppColors.teal,
-                            fontSize: 13,
+                            color: AppColors.safeGreen,
+                            fontSize: 12,
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
@@ -343,6 +343,45 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 10),
+
+                // Excel (.xlsx) option
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      if (dashState != null && balances != null) {
+                        _exportExcel(
+                          context,
+                          studentName,
+                          activeMY,
+                          dashState,
+                          balances,
+                          expenses,
+                        );
+                      }
+                    },
+                    icon: const Icon(
+                      LucideIcons.fileSpreadsheet,
+                      size: 18,
+                      color: AppColors.neutralSlate,
+                    ),
+                    label: const Text(
+                      'Download Excel Spreadsheet (.xlsx)',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.neutralSlate,
+                        fontSize: 12,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 20),
               ],
@@ -491,5 +530,149 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         );
       },
     );
+  }
+
+  Future<void> _exportHisabStatementPdf(
+    BuildContext context,
+    String studentName,
+    ActiveMonthYear activeMY,
+    dynamic dashState,
+    dynamic balances,
+    List<Expense> expenses,
+  ) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Preparing Hisab Statement PDF...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+      await PdfExportService.layoutItemizedHisab(
+        studentName: studentName,
+        year: activeMY.year,
+        month: activeMY.month,
+        summary: dashState.monthSummary,
+        categories: dashState.categorySummaries,
+        expenses: expenses,
+        friendsBalances: balances,
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not generate Hisab PDF: $e'),
+            backgroundColor: AppColors.dangerRed,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _exportParentAuditPdf(
+    BuildContext context,
+    String studentName,
+    ActiveMonthYear activeMY,
+    dynamic dashState,
+    dynamic balances,
+    List<Expense> expenses,
+  ) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Preparing Parent Audit PDF...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+      await PdfExportService.layoutMonthlyReport(
+        studentName: studentName,
+        year: activeMY.year,
+        month: activeMY.month,
+        summary: dashState.monthSummary,
+        categories: dashState.categorySummaries,
+        expenses: expenses,
+        friendsBalances: balances,
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not generate Parent PDF: $e'),
+            backgroundColor: AppColors.dangerRed,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _shareHisabPdf(
+    BuildContext context,
+    String studentName,
+    ActiveMonthYear activeMY,
+    dynamic dashState,
+    dynamic balances,
+    List<Expense> expenses,
+  ) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Preparing Hisab Statement to share...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+      await PdfExportService.printOrShareItemizedHisab(
+        studentName: studentName,
+        year: activeMY.year,
+        month: activeMY.month,
+        summary: dashState.monthSummary,
+        categories: dashState.categorySummaries,
+        expenses: expenses,
+        friendsBalances: balances,
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not share Hisab Statement: $e'),
+            backgroundColor: AppColors.dangerRed,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _exportExcel(
+    BuildContext context,
+    String studentName,
+    ActiveMonthYear activeMY,
+    dynamic dashState,
+    dynamic balances,
+    List<Expense> expenses,
+  ) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Generating Excel workbook...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+      await ExcelExportService.exportMonthlyExcel(
+        studentName: studentName,
+        year: activeMY.year,
+        month: activeMY.month,
+        summary: dashState.monthSummary,
+        categories: dashState.categorySummaries,
+        expenses: expenses,
+        friendsBalances: balances,
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not export Excel: $e'),
+            backgroundColor: AppColors.dangerRed,
+          ),
+        );
+      }
+    }
   }
 }

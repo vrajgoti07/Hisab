@@ -566,20 +566,23 @@ class _AddSplitExpenseScreenState extends ConsumerState<AddSplitExpenseScreen> {
             const SizedBox(height: 14),
 
             // Checkbox: Sync My Share to Personal Expenses
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              value: _syncMyShareToExpenses,
-              onChanged: (val) =>
-                  setState(() => _syncMyShareToExpenses = val ?? true),
-              title: const Text(
-                'Add only MY share to personal monthly expenses',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            Material(
+              type: MaterialType.transparency,
+              child: CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _syncMyShareToExpenses,
+                onChanged: (val) =>
+                    setState(() => _syncMyShareToExpenses = val ?? true),
+                title: const Text(
+                  'Add only MY share to personal monthly expenses',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                subtitle: const Text(
+                  'Protects your personal budget from friends\' shares',
+                  style: TextStyle(fontSize: 11, color: AppColors.neutralSlate),
+                ),
+                activeColor: AppColors.emerald,
               ),
-              subtitle: const Text(
-                'Protects your personal budget from friends\' shares',
-                style: TextStyle(fontSize: 11, color: AppColors.neutralSlate),
-              ),
-              activeColor: AppColors.emerald,
             ),
             const SizedBox(height: 20),
 

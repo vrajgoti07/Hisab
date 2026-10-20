@@ -211,18 +211,21 @@ class _BudgetSetupScreenState extends ConsumerState<BudgetSetupScreen> {
                         ? AppColors.borderDark
                         : AppColors.borderLight,
                   ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: _carryForward,
-                    onChanged: (val) => setState(() => _carryForward = val),
-                    title: const Text(
-                      'Carry forward unspent balance to next month',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                  Material(
+                    type: MaterialType.transparency,
+                    child: SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: _carryForward,
+                      onChanged: (val) => setState(() => _carryForward = val),
+                      title: const Text(
+                        'Carry forward unspent balance to next month',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
+                      activeThumbColor: AppColors.emerald,
                     ),
-                    activeThumbColor: AppColors.emerald,
                   ),
                 ],
               ),
